@@ -25,4 +25,4 @@ export function useFile() {
     throw new Error('useFile must be used within a FileProvider');
   }
   return context;
-} 
+}
