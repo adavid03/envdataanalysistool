@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { calculateCorrelation } from '@/utils/statistics';
 import { ProcessedData } from '@/utils/dataProcessing';
 import { getDataByVariable } from '@/utils/dataAccess';
@@ -15,7 +15,6 @@ interface CorrelationMatrixProps {
 export function CorrelationMatrix({ data, variables, variableLabels }: CorrelationMatrixProps) {
   const plotRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
-  const [isClient, setIsClient] = useState(false);
 
   // Memoize the variables and labels
   const memoizedVariables = useMemo(() => {
@@ -50,87 +49,82 @@ export function CorrelationMatrix({ data, variables, variableLabels }: Correlati
     );
   }, [data, memoizedVariables]);
 
-  // Set isClient to true when component mounts
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    const plotElement = plotRef.current;
+    if (!plotElement) return;
 
-  useEffect(() => {
-    if (!plotRef.current || !isClient) return;
+    (async () => {
+      const PlotlyModule = await import('plotly.js-dist-min');
+      const Plotly = PlotlyModule.default;
+      const isDarkMode = theme === 'dark';
 
-    const plot = plotRef.current;
-    const isDarkMode = theme === 'dark';
+      const plotData = [{
+        type: 'heatmap' as const,
+        z: correlations,
+        x: memoizedLabels,
+        y: memoizedLabels,
+        colorscale: 'RdBu',
+        zmin: -1,
+        zmax: 1,
+        hoverongaps: false,
+        hovertemplate: 
+          '<b>%{y}</b> vs <b>%{x}</b><br>' +
+          'Correlation: %{z:.2f}<extra></extra>',
+      }];
 
-    const plotData = [{
-      type: 'heatmap' as const,
-      z: correlations,
-      x: memoizedLabels,
-      y: memoizedLabels,
-      colorscale: 'RdBu',
-      zmin: -1,
-      zmax: 1,
-      hoverongaps: false,
-      hovertemplate: 
-        '<b>%{y}</b> vs <b>%{x}</b><br>' +
-        'Correlation: %{z:.2f}<extra></extra>',
-    }];
+      const layout = {
+        title: 'Correlation Matrix',
+        width: 800,
+        height: 800,
+        margin: { t: 50, b: 100, l: 100, r: 50 },
+        xaxis: {
+          tickangle: 45,
+          tickfont: { size: 10, color: isDarkMode ? '#D1D5DB' : undefined },
+          color: isDarkMode ? '#D1D5DB' : undefined,
+          gridcolor: isDarkMode ? '#374151' : undefined,
+          zerolinecolor: isDarkMode ? '#4B5563' : undefined
+        },
+        yaxis: {
+          tickfont: { size: 10, color: isDarkMode ? '#D1D5DB' : undefined },
+          color: isDarkMode ? '#D1D5DB' : undefined,
+          gridcolor: isDarkMode ? '#374151' : undefined,
+          zerolinecolor: isDarkMode ? '#4B5563' : undefined
+        },
+        plot_bgcolor: isDarkMode ? '#1F2937' : undefined,
+        paper_bgcolor: isDarkMode ? '#1F2937' : undefined,
+        font: {
+          color: isDarkMode ? '#D1D5DB' : undefined
+        },
+        annotations: correlations.map((row, i) => 
+          row.map((val, j) => ({
+            text: val.toFixed(2),
+            x: j,
+            y: i,
+            xref: 'x' as const,
+            yref: 'y' as const,
+            showarrow: false,
+            font: {
+              color: isDarkMode 
+                ? Math.abs(val) > 0.5 ? '#FFFFFF' : '#D1D5DB'
+                : Math.abs(val) > 0.5 ? 'white' : 'black',
+              size: 10
+            }
+          }))
+        ).flat(),
+      };
 
-    const layout = {
-      title: 'Correlation Matrix',
-      width: 800,
-      height: 800,
-      margin: { t: 50, b: 100, l: 100, r: 50 },
-      xaxis: {
-        tickangle: 45,
-        tickfont: { size: 10, color: isDarkMode ? '#D1D5DB' : undefined },
-        color: isDarkMode ? '#D1D5DB' : undefined,
-        gridcolor: isDarkMode ? '#374151' : undefined,
-        zerolinecolor: isDarkMode ? '#4B5563' : undefined
-      },
-      yaxis: {
-        tickfont: { size: 10, color: isDarkMode ? '#D1D5DB' : undefined },
-        color: isDarkMode ? '#D1D5DB' : undefined,
-        gridcolor: isDarkMode ? '#374151' : undefined,
-        zerolinecolor: isDarkMode ? '#4B5563' : undefined
-      },
-      plot_bgcolor: isDarkMode ? '#1F2937' : undefined,
-      paper_bgcolor: isDarkMode ? '#1F2937' : undefined,
-      font: {
-        color: isDarkMode ? '#D1D5DB' : undefined
-      },
-      annotations: correlations.map((row, i) => 
-        row.map((val, j) => ({
-          text: val.toFixed(2),
-          x: j,
-          y: i,
-          xref: 'x' as const,
-          yref: 'y' as const,
-          showarrow: false,
-          font: {
-            color: isDarkMode 
-              ? Math.abs(val) > 0.5 ? '#FFFFFF' : '#D1D5DB'
-              : Math.abs(val) > 0.5 ? 'white' : 'black',
-            size: 10
-          }
-        }))
-      ).flat(),
-    };
-
-    // Dynamically import Plotly only on client side
-    import('plotly.js-dist-min').then(Plotly => {
-      Plotly.newPlot(plot, plotData, layout);
-    });
+      Plotly.newPlot(plotElement, plotData, layout);
+    })();
 
     return () => {
-      import('plotly.js-dist-min').then(Plotly => {
-        Plotly.purge(plot);
-      });
+      // Clean up the plot when the component unmounts
+      (async () => {
+        const PlotlyModule = await import('plotly.js-dist-min');
+        const Plotly = PlotlyModule.default;
+        Plotly.purge(plotElement);
+      })();
     };
-  }, [theme, correlations, memoizedLabels, isClient]);
-
-  if (!isClient) {
-    return <div className="w-full h-[800px] bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />;
-  }
+  }, [theme, correlations, memoizedLabels]);
 
   return <div ref={plotRef} />;
 } 
