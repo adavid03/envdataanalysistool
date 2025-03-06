@@ -6,7 +6,6 @@ import { ArrowLeftIcon, PlusIcon, XIcon } from 'lucide-react';
 import Link from 'next/link';
 import { ProcessedData, processExcelFile } from '@/utils/dataProcessing';
 import dynamic from 'next/dynamic';
-import { ScatterPlot } from '@/components/visualizations/ScatterPlot';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { calculateCorrelation } from '@/utils/statistics';
 import { getDataByVariable } from '@/utils/dataAccess';
@@ -14,7 +13,12 @@ import { useAnalysisMode } from '../contexts/AnalysisModeContext';
 import { autoDetectColumns, DetectedColumn } from '@/utils/autoDetect';
 import { AutoDetectionConfirmation } from '@/components/AutoDetectionConfirmation';
 
-// Dynamically import CorrelationMatrix with no SSR
+// Dynamically import all Plotly components with no SSR
+const ScatterPlot = dynamic(
+    () => import('@/components/visualizations/ScatterPlot').then(mod => mod.ScatterPlot),
+    { ssr: false }
+);
+
 const CorrelationMatrix = dynamic(
     () => import('@/components/visualizations/CorrelationMatrix').then(mod => mod.CorrelationMatrix),
     { ssr: false }
