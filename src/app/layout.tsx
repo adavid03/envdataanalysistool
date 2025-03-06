@@ -4,6 +4,7 @@ import "./globals.css";
 import { FileProvider } from './contexts/FileContext';
 import { ThemeProvider } from 'next-themes';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { AnalysisModeProvider } from './contexts/AnalysisModeContext';
 
 const publicSans = Public_Sans({
   variable: "--font-public-sans",
@@ -25,8 +26,10 @@ export default function RootLayout({
       <body className={`${publicSans.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <FileProvider>
-            <ThemeSwitcher />
-            {children}
+            <AnalysisModeProvider>
+              <ThemeSwitcher />
+              {children}
+            </AnalysisModeProvider>
           </FileProvider>
         </ThemeProvider>
       </body>

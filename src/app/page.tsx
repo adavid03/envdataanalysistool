@@ -10,6 +10,9 @@ import { useRouter } from 'next/navigation';
  * Home page component for the Beetlejuice eDNA web application.
  * Provides a drag-and-drop interface for uploading Excel files containing eDNA data.
  */
+
+type AnalysisMode = 'template' | 'template-auto' | 'full-auto';
+
 export default function Home() {
   const router = useRouter();
   // Global file state from FileContext
@@ -18,6 +21,7 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   // Add new state for analyze button
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('template');
 
   /**
    * File validation and processing
@@ -93,37 +97,71 @@ export default function Home() {
     if (!file) return;
 
     setIsAnalyzing(true);
-    // Store loading state in localStorage
     localStorage.setItem('isAnalyzing', 'true');
+    localStorage.setItem('analysisMode', analysisMode);
     try {
       await router.replace('/analysis');
     } catch (error) {
       console.error('Error navigating to analysis page:', error);
-      // Reset loading state if navigation fails
       setIsAnalyzing(false);
       localStorage.removeItem('isAnalyzing');
+      localStorage.removeItem('analysisMode');
     }
   };
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col row-start-2 items-center sm:items-start">
+    <div className="grid grid-rows-[auto_1fr_auto] items-center justify-items-center h-screen max-h-screen overflow-hidden">
+      {/* Documentation Link - Now in top left */}
+      <div className="w-full px-4 py-3">
+        <Link
+          href="/documentation"
+          className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          View Documentation
+        </Link>
+      </div>
+
+      <main className="flex flex-col items-center w-full max-w-xl mx-auto">
         {/* Header Section */}
-        <div className="flex items-center gap-4 w-full justify-center mb-3">
+        <div className="flex items-center gap-3 justify-center mb-2">
           <Image
             src="/beetle.png"
             alt="Beetlejuice eDNA"
             width={100}
             height={100}
-            className="w-14 dark:invert"
+            className="w-12 dark:invert"
           />
-          <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
             Beetlejuice eDNA
           </h1>
         </div>
-        <p className="text-lg text-gray-500 dark:text-gray-400 text-center mb-8 w-full">
+        <p className="text-base text-gray-500 dark:text-gray-400 text-center mb-4">
           Start by uploading your eDNA data
         </p>
+
+        {/* Analysis Mode Selection */}
+        <div className="w-full mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Analysis Mode
+          </label>
+          <select
+            value={analysisMode}
+            onChange={(e) => setAnalysisMode(e.target.value as AnalysisMode)}
+            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="template">Template Mode (Default)</option>
+            <option value="template-auto">Template + Auto Detection</option>
+            <option value="full-auto">Full Auto Detection</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {analysisMode === 'template' && 'Use predefined template for data analysis'}
+            {analysisMode === 'template-auto' && 'Use template with automatic column detection'}
+            {analysisMode === 'full-auto' && 'Fully automatic column detection and analysis'}
+          </p>
+        </div>
 
         {/* File Drop Zone */}
         <div
@@ -227,16 +265,15 @@ export default function Home() {
       </main>
 
       {/* Footer Credits */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 text-sm text-gray-500 dark:text-gray-400 text-center w-full px-4 flex items-center gap-1 justify-center">
-        This project was made possible by{' '}
+      <div className="py-2 text-xs text-gray-500 dark:text-gray-400 text-center w-full px-4 flex flex-wrap items-center gap-1 justify-center">
+        Made possible by{' '}
         <Link href="https://www.uwyo.edu/wyominginbre/index.html" target="_blank" className="text-gray-700 dark:text-gray-300 hover:underline">
           Wyoming INBRE
-        </Link>,
-        the{' '}
+        </Link>
+        {' & '}
         <Link href="https://www.lccc.wy.edu" target="_blank" className="text-gray-700 dark:text-gray-300 hover:underline">
-          Laramie County Community College
-        </Link>,
-        Dr. Gavin Martin, Dr. Heather Talbott, Dr. Zac Roehrs, and Dr. Ami Wangeline.
+          LCCC
+        </Link>
       </div>
     </div>
   );

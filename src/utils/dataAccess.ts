@@ -29,20 +29,38 @@ export function getDataByVariable(data: ProcessedData, variable: string): number
         'Richness': 'richness'
     };
 
+    // First try to find the variable in the template mapping
     const internalName = variableMap[variable];
-    if (!internalName) {
-        console.warn(`Variable "${variable}" not found in variableMap`);
-        return [];
+    if (internalName) {
+        // Check if it's an environmental factor
+        if (internalName in data.environmentalFactors) {
+            return data.environmentalFactors[internalName as keyof ProcessedData['environmentalFactors']];
+        }
+
+        // Check if it's a diversity index
+        if (internalName in data.diversityIndices) {
+            return data.diversityIndices[internalName as keyof ProcessedData['diversityIndices']];
+        }
     }
 
-    // Check if it's an environmental factor
-    if (internalName in data.environmentalFactors) {
-        return data.environmentalFactors[internalName as keyof ProcessedData['environmentalFactors']];
+    // If not found in template mapping, try to find it directly in the data
+    // Convert the variable name to match the internal format (lowercase, no spaces)
+    const normalizedName = variable.toLowerCase().replace(/\s+/g, '');
+    
+    // Check environmental factors
+    const envFactor = Object.entries(data.environmentalFactors).find(([key]) => 
+        key.toLowerCase().replace(/\s+/g, '') === normalizedName
+    );
+    if (envFactor) {
+        return envFactor[1];
     }
 
-    // Check if it's a diversity index
-    if (internalName in data.diversityIndices) {
-        return data.diversityIndices[internalName as keyof ProcessedData['diversityIndices']];
+    // Check diversity indices
+    const divIndex = Object.entries(data.diversityIndices).find(([key]) => 
+        key.toLowerCase().replace(/\s+/g, '') === normalizedName
+    );
+    if (divIndex) {
+        return divIndex[1];
     }
 
     console.warn(`Variable "${variable}" not found in data structure`);

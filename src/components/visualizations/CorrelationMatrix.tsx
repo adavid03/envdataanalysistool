@@ -1,19 +1,46 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import Plotly from 'plotly.js-dist-min';
 import { calculateCorrelation } from '@/utils/statistics';
 import { ProcessedData } from '@/utils/dataProcessing';
 import { getDataByVariable } from '@/utils/dataAccess';
 import { useTheme } from 'next-themes';
 
-interface Props {
+interface CorrelationMatrixProps {
   data: ProcessedData;
+  variables?: string[];
+  variableLabels?: Record<string, string>;
 }
 
-export function CorrelationMatrix({ data }: Props) {
+export function CorrelationMatrix({ data, variables, variableLabels }: CorrelationMatrixProps) {
   const plotRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+
+  // Memoize the variables and labels
+  const memoizedVariables = useMemo(() => variables || Object.keys(data.data), [data, variables]);
+  const memoizedLabels = useMemo(() => {
+    const getLabel = (variable: string) => {
+      if (variableLabels && variableLabels[variable]) {
+        return variableLabels[variable];
+      }
+      return variable.split(/[_-]/).map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+    };
+    return memoizedVariables.map(getLabel);
+  }, [memoizedVariables, variableLabels]);
+
+  // Memoize the correlation calculations
+  const correlations = useMemo(() => {
+    return memoizedVariables.map(var1 =>
+      memoizedVariables.map(var2 => {
+        const data1 = getDataByVariable(data, var1);
+        const data2 = getDataByVariable(data, var2);
+        return calculateCorrelation(data1, data2);
+      })
+    );
+  }, [data, memoizedVariables]);
 
   useEffect(() => {
     if (!plotRef.current) return;
@@ -21,50 +48,11 @@ export function CorrelationMatrix({ data }: Props) {
     const plot = plotRef.current;
     const isDarkMode = theme === 'dark';
 
-    // Define all variables with their display labels
-    const variables = [
-      // Environmental Factors
-      { value: 'Avg Temperature', label: 'Temperature' },
-      { value: 'Departure', label: 'Departure' },
-      { value: 'pH', label: 'pH' },
-      { value: 'Elevation', label: 'Elevation' },
-      { value: 'General hardness (calcium carbonate)', label: 'Hardness' },
-      { value: 'Total alkalinity ', label: 'Alkalinity' },
-      { value: 'Carbonate ', label: 'Carbonate' },
-      { value: 'Phosphate', label: 'Phosphate' },
-      { value: 'Nitrate  ', label: 'Nitrate' },
-      { value: 'Nitrite ', label: 'Nitrite' },
-      { value: 'Free chlorine', label: 'Chlorine' },
-      { value: 'Radioactivity above background', label: 'Radioactivity' },
-      { value: 'Longitude', label: 'Longitude' },
-      { value: 'Latitude', label: 'Latitude' },
-      // Diversity Indices
-      { value: 'Shannon diversity index', label: 'Shannon' },
-      { value: "Simpson's index", label: 'Simpson' },
-      { value: "Inverse Simpson's index", label: 'Inverse Simpson' },
-      { value: 'Berger Parker index', label: 'Berger-Parker' },
-      { value: 'Effective number of species', label: 'Effective Species' },
-      { value: "Fisher's alpha", label: "Fisher's Alpha" },
-      { value: "Pielou's evenness", label: "Pielou's Evenness" },
-      { value: 'Richness', label: 'Richness' },
-    ];
-
-    // Get data for each variable
-    const variableData = variables.map(v => ({
-      ...v,
-      values: getDataByVariable(data, v.value)
-    }));
-
-    // Calculate correlation matrix
-    const correlationMatrix = variableData.map(v1 => 
-      variableData.map(v2 => calculateCorrelation(v1.values, v2.values))
-    );
-
     const plotData = [{
       type: 'heatmap' as const,
-      z: correlationMatrix,
-      x: variables.map(v => v.label),
-      y: variables.map(v => v.label),
+      z: correlations,
+      x: memoizedLabels,
+      y: memoizedLabels,
       colorscale: 'RdBu',
       zmin: -1,
       zmax: 1,
@@ -97,7 +85,7 @@ export function CorrelationMatrix({ data }: Props) {
       font: {
         color: isDarkMode ? '#D1D5DB' : undefined
       },
-      annotations: correlationMatrix.map((row, i) => 
+      annotations: correlations.map((row, i) => 
         row.map((val, j) => ({
           text: val.toFixed(2),
           x: j,
@@ -120,7 +108,7 @@ export function CorrelationMatrix({ data }: Props) {
     return () => {
       Plotly.purge(plot);
     };
-  }, [data, theme]);
+  }, [theme, correlations, memoizedLabels]);
 
   return <div ref={plotRef} />;
 } 
