@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useMemo } from 'react';
-import Plotly from 'plotly.js-dist-min';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { calculateCorrelation } from '@/utils/statistics';
 import { ProcessedData } from '@/utils/dataProcessing';
 import { getDataByVariable } from '@/utils/dataAccess';
@@ -16,9 +15,18 @@ interface CorrelationMatrixProps {
 export function CorrelationMatrix({ data, variables, variableLabels }: CorrelationMatrixProps) {
   const plotRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+  const [isClient, setIsClient] = useState(false);
 
   // Memoize the variables and labels
-  const memoizedVariables = useMemo(() => variables || Object.keys(data.data), [data, variables]);
+  const memoizedVariables = useMemo(() => {
+    if (variables) return variables;
+    
+    // Get all available variables from the data structure
+    const envVars = Object.keys(data.environmentalFactors);
+    const divVars = Object.keys(data.diversityIndices);
+    return [...envVars, ...divVars];
+  }, [data, variables]);
+
   const memoizedLabels = useMemo(() => {
     const getLabel = (variable: string) => {
       if (variableLabels && variableLabels[variable]) {
@@ -42,8 +50,13 @@ export function CorrelationMatrix({ data, variables, variableLabels }: Correlati
     );
   }, [data, memoizedVariables]);
 
+  // Set isClient to true when component mounts
   useEffect(() => {
-    if (!plotRef.current) return;
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!plotRef.current || !isClient) return;
 
     const plot = plotRef.current;
     const isDarkMode = theme === 'dark';
@@ -103,12 +116,21 @@ export function CorrelationMatrix({ data, variables, variableLabels }: Correlati
       ).flat(),
     };
 
-    Plotly.newPlot(plot, plotData, layout);
+    // Dynamically import Plotly only on client side
+    import('plotly.js-dist-min').then(Plotly => {
+      Plotly.newPlot(plot, plotData, layout);
+    });
 
     return () => {
-      Plotly.purge(plot);
+      import('plotly.js-dist-min').then(Plotly => {
+        Plotly.purge(plot);
+      });
     };
-  }, [theme, correlations, memoizedLabels]);
+  }, [theme, correlations, memoizedLabels, isClient]);
+
+  if (!isClient) {
+    return <div className="w-full h-[800px] bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />;
+  }
 
   return <div ref={plotRef} />;
 } 
