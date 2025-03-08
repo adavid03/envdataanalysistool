@@ -3,7 +3,15 @@
 import { ProcessedData } from './dataProcessing';
 
 export function getDataByVariable(data: ProcessedData, variable: string): number[] {
-    // Convert display names to internal names
+    // First try to find the variable directly in the data structure
+    if (variable in data.environmentalFactors && Array.isArray(data.environmentalFactors[variable as keyof ProcessedData['environmentalFactors']])) {
+        return data.environmentalFactors[variable as keyof ProcessedData['environmentalFactors']];
+    }
+    if (variable in data.diversityIndices && Array.isArray(data.diversityIndices[variable as keyof ProcessedData['diversityIndices']])) {
+        return data.diversityIndices[variable as keyof ProcessedData['diversityIndices']];
+    }
+
+    // If not found directly, try the template mapping
     const variableMap: Record<string, keyof ProcessedData['environmentalFactors'] | keyof ProcessedData['diversityIndices']> = {
         'Avg Temperature': 'temperature',
         'Departure': 'departure',
@@ -29,7 +37,6 @@ export function getDataByVariable(data: ProcessedData, variable: string): number
         'Richness': 'richness'
     };
 
-    // First try to find the variable in the template mapping
     const internalName = variableMap[variable];
     if (internalName) {
         // Check if it's an environmental factor
@@ -43,8 +50,7 @@ export function getDataByVariable(data: ProcessedData, variable: string): number
         }
     }
 
-    // If not found in template mapping, try to find it directly in the data
-    // Convert the variable name to match the internal format (lowercase, no spaces)
+    // If still not found, try normalized name matching
     const normalizedName = variable.toLowerCase().replace(/\s+/g, '');
     
     // Check environmental factors

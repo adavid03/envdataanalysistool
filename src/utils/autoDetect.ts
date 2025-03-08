@@ -257,57 +257,95 @@ export function autoDetectColumns(data: ProcessedData): DetectionResult {
     try {
         const columns: DetectedColumn[] = [];
 
-        // Get all column names from the data
-        const allColumns = [
-            ...Object.keys(data.environmentalFactors),
-            ...Object.keys(data.diversityIndices),
-            ...Object.keys(data.metadata)
-        ];
-
-        // Analyze each column
-        allColumns.forEach(column => {
-            const normalizedColumn = normalizeString(column);
-            let type: DetectedColumn['type'] = 'unknown';
-            let confidence = 0;
-            let description = '';
-
-            // Calculate confidence scores for each type
-            const envConfidence = calculateConfidence(normalizedColumn, ENVIRONMENTAL_PATTERNS);
-            const divConfidence = calculateConfidence(normalizedColumn, DIVERSITY_PATTERNS);
-            const metaConfidence = calculateConfidence(normalizedColumn, METADATA_PATTERNS);
-
-            // Determine the type with highest confidence
-            if (envConfidence > divConfidence && envConfidence > metaConfidence) {
-                type = 'environmental';
-                confidence = envConfidence;
-                description = 'Environmental measurement or parameter';
-            } else if (divConfidence > envConfidence && divConfidence > metaConfidence) {
-                type = 'diversity';
-                confidence = divConfidence;
-                description = 'Biodiversity or species diversity metric';
-            } else if (metaConfidence > envConfidence && metaConfidence > divConfidence) {
-                type = 'metadata';
-                confidence = metaConfidence;
-                description = 'Sample or site metadata';
+        // Process environmental factors
+        Object.entries(data.environmentalFactors).forEach(([key, values]) => {
+            // Skip if all values are undefined or null
+            if (!values || values.every(v => v === undefined || v === null)) {
+                return;
             }
 
+            const name = key.charAt(0).toUpperCase() + key.slice(1);
+            const confidence = calculateConfidence(name, ENVIRONMENTAL_PATTERNS);
+            
             columns.push({
-                name: column,
-                type,
+                name,
+                type: 'environmental',
                 confidence,
-                description
+                description: `Environmental measurement: ${name}`
             });
         });
 
+        // Process diversity indices
+        Object.entries(data.diversityIndices).forEach(([key, values]) => {
+            // Skip if all values are undefined or null
+            if (!values || values.every(v => v === undefined || v === null)) {
+                return;
+            }
+
+            const name = key.charAt(0).toUpperCase() + key.slice(1);
+            const confidence = calculateConfidence(name, DIVERSITY_PATTERNS);
+            
+            columns.push({
+                name,
+                type: 'diversity',
+                confidence,
+                description: `Diversity index: ${name}`
+            });
+        });
+
+        // Process metadata
+        Object.entries(data.metadata).forEach(([key, values]) => {
+            // Handle nested locations object
+            if (key === 'locations') {
+                const locations = values as { lat: number[]; long: number[] };
+                if (locations.lat && locations.lat.some((v: number) => v !== undefined && v !== null)) {
+                    columns.push({
+                        name: 'Latitude',
+                        type: 'metadata',
+                        confidence: calculateConfidence('Latitude', METADATA_PATTERNS),
+                        description: 'Geographic latitude'
+                    });
+                }
+                if (locations.long && locations.long.some((v: number) => v !== undefined && v !== null)) {
+                    columns.push({
+                        name: 'Longitude',
+                        type: 'metadata',
+                        confidence: calculateConfidence('Longitude', METADATA_PATTERNS),
+                        description: 'Geographic longitude'
+                    });
+                }
+                return;
+            }
+
+            // Handle string arrays
+            const stringArray = values as string[];
+            if (!stringArray || stringArray.every((v: string) => v === undefined || v === null)) {
+                return;
+            }
+
+            const name = key.charAt(0).toUpperCase() + key.slice(1);
+            const confidence = calculateConfidence(name, METADATA_PATTERNS);
+            
+            columns.push({
+                name,
+                type: 'metadata',
+                confidence,
+                description: `Metadata: ${name}`
+            });
+        });
+
+        console.log('Auto-detected columns:', columns);
+
         return {
-            columns,
-            success: true
+            columns: columns.sort((a, b) => b.confidence - a.confidence),
+            success: columns.length > 0
         };
     } catch (error) {
+        console.error('Error in autoDetectColumns:', error);
         return {
             columns: [],
             success: false,
-            error: error instanceof Error ? error.message : 'Unknown error during auto-detection'
+            error: error instanceof Error ? error.message : 'Unknown error'
         };
     }
 }

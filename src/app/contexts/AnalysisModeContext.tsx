@@ -12,15 +12,21 @@ interface AnalysisModeContextType {
 const AnalysisModeContext = createContext<AnalysisModeContextType | undefined>(undefined);
 
 export function AnalysisModeProvider({ children }: { children: ReactNode }) {
-    const [mode, setMode] = useState<AnalysisMode>('template');
+    const [mode, setModeState] = useState<AnalysisMode>('template');
 
+    // Load mode from localStorage on mount
     useEffect(() => {
-        // Check localStorage on mount
         const savedMode = localStorage.getItem('analysisMode') as AnalysisMode;
         if (savedMode && ['template', 'template-auto', 'full-auto'].includes(savedMode)) {
-            setMode(savedMode);
+            setModeState(savedMode);
         }
     }, []);
+
+    // Wrapper for setMode that also updates localStorage
+    const setMode = (newMode: AnalysisMode) => {
+        setModeState(newMode);
+        localStorage.setItem('analysisMode', newMode);
+    };
 
     return (
         <AnalysisModeContext.Provider value={{ mode, setMode }}>

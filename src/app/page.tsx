@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useFile } from './contexts/FileContext';
 import { useRouter } from 'next/navigation';
+import { useAnalysisMode } from './contexts/AnalysisModeContext';
 /**
  * Home page component for the Beetlejuice eDNA web application.
  * Provides a drag-and-drop interface for uploading Excel files containing eDNA data.
@@ -17,11 +18,12 @@ export default function Home() {
   const router = useRouter();
   // Global file state from FileContext
   const { file, setFile } = useFile();
+  // Get mode from context
+  const { mode, setMode } = useAnalysisMode();
   // Local state for drag interaction feedback
   const [isDragging, setIsDragging] = useState(false);
   // Add new state for analyze button
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('template');
 
   /**
    * File validation and processing
@@ -98,14 +100,12 @@ export default function Home() {
 
     setIsAnalyzing(true);
     localStorage.setItem('isAnalyzing', 'true');
-    localStorage.setItem('analysisMode', analysisMode);
     try {
       await router.replace('/analysis');
     } catch (error) {
       console.error('Error navigating to analysis page:', error);
       setIsAnalyzing(false);
       localStorage.removeItem('isAnalyzing');
-      localStorage.removeItem('analysisMode');
     }
   };
 
@@ -148,8 +148,8 @@ export default function Home() {
             Analysis Mode
           </label>
           <select
-            value={analysisMode}
-            onChange={(e) => setAnalysisMode(e.target.value as AnalysisMode)}
+            value={mode}
+            onChange={(e) => setMode(e.target.value as AnalysisMode)}
             className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="template">Template Mode (Default)</option>
@@ -157,9 +157,9 @@ export default function Home() {
             <option value="full-auto">Full Auto Detection</option>
           </select>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {analysisMode === 'template' && 'Use predefined template for data analysis'}
-            {analysisMode === 'template-auto' && 'Use template with automatic column detection'}
-            {analysisMode === 'full-auto' && 'Fully automatic column detection and analysis'}
+            {mode === 'template' && 'Use predefined template for data analysis'}
+            {mode === 'template-auto' && 'Use template with automatic column detection'}
+            {mode === 'full-auto' && 'Fully automatic column detection and analysis'}
           </p>
         </div>
 

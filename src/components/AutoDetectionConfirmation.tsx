@@ -2,21 +2,36 @@ import { useState } from 'react';
 import { DetectedColumn } from '@/utils/autoDetect';
 import { Edit2Icon, CheckIcon, XIcon } from 'lucide-react';
 
+type ColumnType = 'environmental' | 'diversity' | 'metadata' | 'unknown';
+
 interface Props {
     columns: DetectedColumn[];
-    onConfirm: () => void;
+    onConfirm: (editedColumns: DetectedColumn[]) => void;
     onCancel: () => void;
 }
 
 export function AutoDetectionConfirmation({ columns, onConfirm, onCancel }: Props) {
+    // Deduplicate columns on initial state setup
     const [editingColumn, setEditingColumn] = useState<string | null>(null);
-    const [editedColumns, setEditedColumns] = useState<DetectedColumn[]>(columns);
+    const [editedColumns, setEditedColumns] = useState<DetectedColumn[]>(() => {
+        // Create a map to track seen columns and their highest confidence
+        const columnMap = new Map<string, DetectedColumn>();
+        
+        columns.forEach(col => {
+            const existing = columnMap.get(col.name);
+            if (!existing || col.confidence > existing.confidence) {
+                columnMap.set(col.name, col);
+            }
+        });
+
+        return Array.from(columnMap.values());
+    });
 
     const handleEdit = (columnName: string) => {
         setEditingColumn(columnName);
     };
 
-    const handleSave = (columnName: string, newType: DetectedColumn['type']) => {
+    const handleSave = (columnName: string, newType: ColumnType) => {
         setEditedColumns(prev => prev.map(col => 
             col.name === columnName 
                 ? { ...col, type: newType, description: getDescriptionForType(newType) }
@@ -25,22 +40,20 @@ export function AutoDetectionConfirmation({ columns, onConfirm, onCancel }: Prop
         setEditingColumn(null);
     };
 
-    const getDescriptionForType = (type: DetectedColumn['type']): string => {
+    const handleConfirm = () => {
+        onConfirm(editedColumns);
+    };
+
+    const getDescriptionForType = (type: ColumnType): string => {
         switch (type) {
-            case 'environmental': return 'Environmental measurement or parameter';
-            case 'diversity': return 'Biodiversity or species diversity metric';
-            case 'metadata': return 'Sample or site metadata';
-            default: return 'Could not determine the type of this column';
+            case 'environmental': return 'Environmental measurement';
+            case 'diversity': return 'Diversity metric';
+            case 'metadata': return 'Metadata';
+            default: return 'Unknown type';
         }
     };
 
-    const getConfidenceColor = (confidence: number): string => {
-        if (confidence >= 0.8) return 'text-green-500 dark:text-green-400';
-        if (confidence >= 0.6) return 'text-yellow-500 dark:text-yellow-400';
-        return 'text-red-500 dark:text-red-400';
-    };
-
-    const getTypeColor = (type: DetectedColumn['type']): string => {
+    const getTypeColor = (type: ColumnType): string => {
         switch (type) {
             case 'environmental': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
             case 'diversity': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
@@ -52,80 +65,63 @@ export function AutoDetectionConfirmation({ columns, onConfirm, onCancel }: Prop
     const groupedColumns = editedColumns.reduce((acc, col) => {
         acc[col.type] = [...(acc[col.type] || []), col];
         return acc;
-    }, {} as Record<DetectedColumn['type'], DetectedColumn[]>);
+    }, {} as Record<ColumnType, DetectedColumn[]>);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                        Auto-Detected Columns
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                        Auto-Detected Variables
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        Please review and adjust the detected columns and their classifications.
-                    </p>
                 </div>
 
-                <div className="p-6 space-y-8">
+                <div className="p-4 space-y-4">
                     {Object.entries(groupedColumns).map(([type, cols]) => (
-                        <div key={type} className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
-                                {type} Columns
+                        <div key={type} className="space-y-2">
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white capitalize flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded-full text-xs ${getTypeColor(type as ColumnType)}`}>
+                                    {type}
+                                </span>
+                                <span>({cols.length})</span>
                             </h3>
-                            <div className="grid gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {cols.map(column => (
                                     <div 
-                                        key={column.name}
-                                        className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                                        key={`${column.name}-${column.type}`}
+                                        className="bg-gray-50 dark:bg-gray-800/50 rounded p-2 border border-gray-200 dark:border-gray-700 flex items-center justify-between"
                                     >
-                                        <div className="flex items-start justify-between">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-medium text-gray-900 dark:text-white">
-                                                        {column.name}
-                                                    </span>
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(column.type)}`}>
-                                                        {column.type}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                    {column.description}
-                                                </p>
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`text-sm ${getConfidenceColor(column.confidence)}`}>
-                                                        {(column.confidence * 100).toFixed(0)}% confidence
-                                                    </span>
-                                                </div>
+                                        <span className="font-medium text-sm text-gray-900 dark:text-white">
+                                            {column.name}
+                                        </span>
+                                        {editingColumn === column.name ? (
+                                            <div className="flex items-center gap-2">
+                                                <select
+                                                    value={column.type}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value as ColumnType;
+                                                        handleSave(column.name, value);
+                                                    }}
+                                                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 text-xs"
+                                                >
+                                                    <option value="environmental">Environmental</option>
+                                                    <option value="diversity">Diversity</option>
+                                                    <option value="metadata">Metadata</option>
+                                                </select>
+                                                <button
+                                                    onClick={() => setEditingColumn(null)}
+                                                    className="text-gray-500 hover:text-red-500"
+                                                >
+                                                    <XIcon className="w-4 h-4" />
+                                                </button>
                                             </div>
+                                        ) : (
                                             <button
                                                 onClick={() => handleEdit(column.name)}
-                                                className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                                                className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
                                             >
-                                                <Edit2Icon className="w-5 h-5" />
+                                                <Edit2Icon className="w-4 h-4" />
                                             </button>
-                                        </div>
-
-                                        {editingColumn === column.name && (
-                                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                                <div className="flex items-center gap-4">
-                                                    <select
-                                                        value={column.type}
-                                                        onChange={(e) => handleSave(column.name, e.target.value as DetectedColumn['type'])}
-                                                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 text-sm"
-                                                    >
-                                                        <option value="environmental">Environmental Factor</option>
-                                                        <option value="diversity">Diversity Index</option>
-                                                        <option value="metadata">Metadata</option>
-                                                        <option value="unknown">Unknown</option>
-                                                    </select>
-                                                    <button
-                                                        onClick={() => setEditingColumn(null)}
-                                                        className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
-                                                    >
-                                                        <XIcon className="w-5 h-5" />
-                                                    </button>
-                                                </div>
-                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -134,19 +130,19 @@ export function AutoDetectionConfirmation({ columns, onConfirm, onCancel }: Prop
                     ))}
                 </div>
 
-                <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-4">
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
                     <button
                         onClick={onCancel}
-                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                        className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                     >
-                        Cancel
+                        Use Template
                     </button>
                     <button
-                        onClick={onConfirm}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2"
+                        onClick={handleConfirm}
+                        className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center gap-1.5"
                     >
-                        <CheckIcon className="w-4 h-4" />
-                        Confirm & Continue
+                        <CheckIcon className="w-3.5 h-3.5" />
+                        Use Auto-Detected
                     </button>
                 </div>
             </div>

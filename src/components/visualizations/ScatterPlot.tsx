@@ -1,81 +1,131 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useTheme } from 'next-themes';
 import { ProcessedData } from '@/utils/dataProcessing';
 import { getDataByVariable } from '@/utils/dataAccess';
+import { useTheme } from 'next-themes';
 
 interface ScatterPlotProps {
-  data: ProcessedData;
-  xVariable: string;
-  yVariable: string;
-  size?: { width: number; height: number };
+    data: ProcessedData;
+    xVariable: string;
+    yVariable: string;
+    height?: number;
 }
 
-export function ScatterPlot({ data, xVariable, yVariable, size }: ScatterPlotProps) {
-  const plotRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
+export const ScatterPlot: React.FC<ScatterPlotProps> = ({ data, xVariable, yVariable, height = 400 }) => {
+    const plotRef = useRef<HTMLDivElement>(null);
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
 
-  useEffect(() => {
-    const plotElement = plotRef.current;
-    if (!plotElement) return;
+    useEffect(() => {
+        if (!plotRef.current) return;
 
-    (async () => {
-      const PlotlyModule = await import('plotly.js-dist-min');
-      const Plotly = PlotlyModule.default;
-      const isDarkMode = theme === 'dark';
+        const plotElement = plotRef.current;
+        const xData = getDataByVariable(data, xVariable);
+        const yData = getDataByVariable(data, yVariable);
 
-      const xData = getDataByVariable(data, xVariable);
-      const yData = getDataByVariable(data, yVariable);
+        // Get all available variables
+        const envVars = Object.keys(data.environmentalFactors);
+        const divVars = Object.keys(data.diversityIndices);
 
-      const plotData = [{
-        type: 'scatter' as const,
-        mode: 'markers' as const,
-        x: xData,
-        y: yData,
-        marker: {
-          size: size ? 6 : 10,
-          color: isDarkMode ? '#60A5FA' : 'blue',
-          opacity: 0.6,
-        },
-        hoverinfo: 'text' as const,
-      }];
+        // Create hover text with all data points
+        const hoverText = xData.map((_, index) => {
+            const sampleCode = data.metadata.sampleCodes[index];
+            const envValues = envVars.map(varName => {
+                const value = getDataByVariable(data, varName)[index];
+                const formattedValue = typeof value === 'number' ? value.toFixed(3) : value;
+                return `${varName}: ${formattedValue}`;
+            });
+            
+            const divValues = divVars.map(varName => {
+                const value = getDataByVariable(data, varName)[index];
+                const formattedValue = typeof value === 'number' ? value.toFixed(3) : value;
+                return `${varName}: ${formattedValue}`;
+            });
 
-      const layout = {
-        title: size ? undefined : `${yVariable} vs ${xVariable}`,
-        width: size?.width || 500,
-        height: size?.height || 500,
-        xaxis: { 
-          title: xVariable,
-          color: isDarkMode ? '#D1D5DB' : undefined,
-          gridcolor: isDarkMode ? '#374151' : undefined,
-          zerolinecolor: isDarkMode ? '#4B5563' : undefined
-        },
-        yaxis: { 
-          title: yVariable,
-          color: isDarkMode ? '#D1D5DB' : undefined,
-          gridcolor: isDarkMode ? '#374151' : undefined,
-          zerolinecolor: isDarkMode ? '#4B5563' : undefined
-        },
-        plot_bgcolor: isDarkMode ? '#1F2937' : undefined,
-        paper_bgcolor: isDarkMode ? '#1F2937' : undefined,
-        font: {
-          color: isDarkMode ? '#D1D5DB' : undefined
-        }
-      };
+            return [
+                `<b>Sample: ${sampleCode}</b>`,
+                '<br><b>Environmental Factors:</b>',
+                ...envValues,
+                '<br><b>Diversity Indices:</b>',
+                ...divValues
+            ].join('<br>');
+        });
 
-      Plotly.newPlot(plotElement, plotData, layout);
-    })();
+        const plotData = [{
+            x: xData,
+            y: yData,
+            mode: 'markers' as const,
+            type: 'scatter' as const,
+            marker: {
+                size: 6
+            },
+            hovertemplate: '%{text}<extra></extra>',
+            text: hoverText,
+            hoverlabel: {
+                bgcolor: isDarkMode ? '#374151' : '#FFFFFF',
+                bordercolor: isDarkMode ? '#4B5563' : '#E5E7EB',
+                font: { 
+                    family: 'monospace',
+                    size: 10,
+                    color: isDarkMode ? '#FFFFFF' : '#000000'
+                }
+            }
+        }];
 
-    return () => {
-      // Clean up the plot when the component unmounts
-      (async () => {
-        const PlotlyModule = await import('plotly.js-dist-min');
-        const Plotly = PlotlyModule.default;
-        Plotly.purge(plotElement);
-      })();
-    };
-  }, [data, xVariable, yVariable, size, theme]);
+        const layout = {
+            height: height,
+            width: undefined,
+            autosize: true,
+            title: `${yVariable} vs ${xVariable}`,
+            xaxis: {
+                title: xVariable,
+                automargin: true
+            },
+            yaxis: {
+                title: yVariable,
+                automargin: true
+            },
+            margin: {
+                l: 50,
+                r: 30,
+                t: 50,
+                b: 50,
+                pad: 0
+            },
+            showlegend: false,
+            plot_bgcolor: isDarkMode ? '#1F2937' : '#FFFFFF',
+            paper_bgcolor: isDarkMode ? '#1F2937' : '#FFFFFF',
+            hovermode: 'closest' as const,
+            hoverdistance: -1,
+            hoverlabel: {
+                namelength: -1,
+                align: 'left' as const
+            }
+        };
 
-  return <div ref={plotRef} />;
-}
+        const config = {
+            displayModeBar: 'hover' as const,
+            responsive: true,
+            displaylogo: false
+        };
+
+        const renderPlot = async () => {
+            const Plotly = (await import('plotly.js-dist-min')).default;
+            await Plotly.newPlot(plotElement, plotData, layout, config);
+        };
+
+        renderPlot();
+
+        return () => {
+            if (plotElement) {
+                (async () => {
+                    const Plotly = (await import('plotly.js-dist-min')).default;
+                    Plotly.purge(plotElement);
+                })();
+            }
+        };
+    }, [data, xVariable, yVariable, height, isDarkMode]);
+
+    return <div ref={plotRef} style={{ width: '100%', height: `${height}px`, minHeight: `${height}px`, position: 'relative', zIndex: 0 }} />;
+};
