@@ -6,7 +6,7 @@ A powerful, interactive tool for analyzing environmental DNA (eDNA) data, specif
 
 ## About the Project
 
-This web application is designed to process and analyze eDNA data collected from beetle samples. It's part of a research initiative at Laramie County Community College, supported by Wyoming INBRE, focusing on understanding beetle biodiversity through molecular techniques.
+This web application is designed to process and analyze eDNA data collected. It's part of a research initiative at Laramie County Community College, supported by Wyoming INBRE, focusing on improve Course Based Undergraduate Research experiences for students.
 
 ## Features
 
