@@ -5,6 +5,7 @@ import { FileProvider } from './contexts/FileContext';
 import { ThemeProvider } from 'next-themes';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { AnalysisModeProvider } from './contexts/AnalysisModeContext';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const publicSans = Public_Sans({
   variable: "--font-public-sans",
@@ -24,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${publicSans.variable} antialiased`}>
+        <SpeedInsights />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <FileProvider>
             <AnalysisModeProvider>

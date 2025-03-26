@@ -59,6 +59,7 @@ interface PlotConfig {
     yVariable: string;
     warning?: string;
     correlation?: number;
+    showCorrelationLine?: boolean;
 }
 
 interface SignificantRelationship {
@@ -187,7 +188,8 @@ export default function AnalysisPage() {
                 setPlots([{
                     id: '1',
                     xVariable: envVars[0].value,
-                    yVariable: divVars[0].value
+                    yVariable: divVars[0].value,
+                    showCorrelationLine: false
                 }]);
             }
         }
@@ -281,7 +283,8 @@ export default function AnalysisPage() {
             id: `auto-${index + 1}`,
             xVariable: rel.envVar.value,
             yVariable: rel.divVar.value,
-            correlation: rel.correlation
+            correlation: rel.correlation,
+            showCorrelationLine: false
         }));
 
         setAutoPlots(newAutoPlots);
@@ -489,12 +492,24 @@ export default function AnalysisPage() {
                                             </div>
 
                                             {plot.xVariable && plot.yVariable && (
-                                                <div className="w-full [&_.nsewdrag]:!h-[200px]" style={{ height: 300 }}>
+                                                <div className="w-full" style={{ height: 300 }}>
+                                                    <div className="flex items-center gap-2 mb-2 px-4 py-1">
+                                                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={plot.showCorrelationLine}
+                                                                onChange={(e) => updatePlot(plot.id, { showCorrelationLine: e.target.checked })}
+                                                                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                                            />
+                                                            <span>Show Correlation Line</span>
+                                                        </label>
+                                                    </div>
                                                     <ScatterPlot
                                                         data={data}
                                                         xVariable={plot.xVariable}
                                                         yVariable={plot.yVariable}
                                                         height={300}
+                                                        showCorrelationLine={plot.showCorrelationLine}
                                                     />
                                                 </div>
                                             )}
@@ -547,12 +562,31 @@ export default function AnalysisPage() {
                                                     </div>
                                                 </div>
                                                 <div className="p-2">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={plot.showCorrelationLine}
+                                                                onChange={(e) => {
+                                                                    const newAutoPlots = autoPlots.map(p => 
+                                                                        p.id === plot.id 
+                                                                            ? { ...p, showCorrelationLine: e.target.checked }
+                                                                            : p
+                                                                    );
+                                                                    setAutoPlots(newAutoPlots);
+                                                                }}
+                                                                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                                            />
+                                                            <span>Show Correlation Line</span>
+                                                        </label>
+                                                    </div>
                                                     <div className="w-full" style={{ height: 300 }}>
                                                         <ScatterPlot
                                                             data={data}
                                                             xVariable={plot.xVariable}
                                                             yVariable={plot.yVariable}
                                                             height={300}
+                                                            showCorrelationLine={plot.showCorrelationLine}
                                                         />
                                                     </div>
                                                 </div>

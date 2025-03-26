@@ -32,3 +32,17 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* Fix for Plotly hover functionality */
+.plotly-graph-wrapper .nsewdrag {
+  pointer-events: all !important;
+  height: 100% !important;
+}
+
+.plotly-graph-wrapper .bglayer {
+  pointer-events: all !important;
+}
+
+.plotly-graph-wrapper .hoverlayer {
+  pointer-events: none !important;
+}

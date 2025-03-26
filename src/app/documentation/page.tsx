@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeftIcon, FileSpreadsheetIcon, ChartBarIcon, BrainIcon, SettingsIcon, BookOpenIcon, CodeIcon } from 'lucide-react';
+import { ArrowLeftIcon, FileSpreadsheetIcon, ChartBarIcon, BrainIcon, SettingsIcon, BookOpenIcon, CodeIcon, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -11,35 +11,39 @@ export default function DocumentationPage() {
     const [activeSubsection, setActiveSubsection] = useState<string>('getting-started');
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <nav className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800">
-                <div className="max-w-7xl mx-auto flex gap-5 items-center">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-                    >
-                        <ArrowLeftIcon className="w-4 h-4" />
-                        Back to Home
-                    </Link>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                        Documentation
-                    </h1>
+        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+            {/* Header */}
+            <div className="fixed top-0 left-0 w-full p-4 backdrop-blur-sm bg-white/50 dark:bg-gray-900/50 z-10 border-b border-gray-200/50 dark:border-gray-700/50">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                        >
+                            <ArrowLeftIcon className="w-4 h-4" />
+                            Back to Home
+                        </Link>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                            Documentation
+                        </h1>
+                    </div>
                 </div>
-            </nav>
+            </div>
 
-            <div className="max-w-7xl mx-auto p-6">
-                <div className="flex gap-6">
-                    {/* Sidebar */}
-                    <div className="w-64 flex-shrink-0">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                                <div className="flex flex-col gap-2">
+            {/* Main Content */}
+            <div className="pt-20 pb-16">
+                <div className="max-w-7xl mx-auto px-4">
+                    <div className="flex gap-6">
+                        {/* Sidebar */}
+                        <div className="w-64 flex-shrink-0">
+                            <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 sticky top-24">
+                                <div className="flex flex-col gap-2 mb-6">
                                     <button
                                         onClick={() => setActiveSection('user-guide')}
                                         className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                                             activeSection === 'user-guide'
                                                 ? 'bg-blue-500 text-white'
-                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
                                         }`}
                                     >
                                         <BookOpenIcon className="w-4 h-4 inline-block mr-1" />
@@ -50,120 +54,146 @@ export default function DocumentationPage() {
                                         className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                                             activeSection === 'technical'
                                                 ? 'bg-blue-500 text-white'
-                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
                                         }`}
                                     >
                                         <CodeIcon className="w-4 h-4 inline-block mr-1" />
                                         Technical
                                     </button>
                                 </div>
-                            </div>
-                            <div className="p-4">
-                                {activeSection === 'user-guide' ? (
-                                    <nav className="space-y-1">
-                                        <button
-                                            onClick={() => setActiveSubsection('getting-started')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'getting-started'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Getting Started
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveSubsection('data-requirements')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'data-requirements'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Data Requirements
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveSubsection('analysis-modes')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'analysis-modes'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Analysis Modes
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveSubsection('step-by-step')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'step-by-step'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Step-by-Step Guide
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveSubsection('tips')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'tips'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Tips & Best Practices
-                                        </button>
-                                    </nav>
-                                ) : (
-                                    <nav className="space-y-1">
-                                        <button
-                                            onClick={() => setActiveSubsection('architecture')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'architecture'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Architecture Overview
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveSubsection('components')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'components'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Components
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveSubsection('utils')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'utils'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Utilities
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveSubsection('contexts')}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                activeSubsection === 'contexts'
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                            }`}
-                                        >
-                                            Contexts
-                                        </button>
-                                    </nav>
-                                )}
+
+                                <nav className="space-y-1">
+                                    {activeSection === 'user-guide' ? (
+                                        <>
+                                            <button
+                                                onClick={() => setActiveSubsection('getting-started')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'getting-started'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Getting Started
+                                                {activeSubsection === 'getting-started' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveSubsection('data-requirements')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'data-requirements'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Data Requirements
+                                                {activeSubsection === 'data-requirements' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveSubsection('analysis-modes')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'analysis-modes'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Analysis Modes
+                                                {activeSubsection === 'analysis-modes' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveSubsection('step-by-step')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'step-by-step'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Step-by-Step Guide
+                                                {activeSubsection === 'step-by-step' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveSubsection('tips')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'tips'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Tips & Best Practices
+                                                {activeSubsection === 'tips' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => setActiveSubsection('architecture')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'architecture'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Architecture Overview
+                                                {activeSubsection === 'architecture' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveSubsection('components')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'components'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Components
+                                                {activeSubsection === 'components' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveSubsection('utils')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'utils'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Utilities
+                                                {activeSubsection === 'utils' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveSubsection('contexts')}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                                    activeSubsection === 'contexts'
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                            >
+                                                Contexts
+                                                {activeSubsection === 'contexts' && (
+                                                    <ChevronRightIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </>
+                                    )}
+                                </nav>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Main Content */}
-                    <div className="flex-1">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div className="p-8">
+                        {/* Main Content Area */}
+                        <div className="flex-1">
+                            <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-8 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
                                 {activeSection === 'user-guide' ? (
                                     // User Guide Content
                                     <div className="space-y-8">
@@ -172,11 +202,24 @@ export default function DocumentationPage() {
                                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                                                     Getting Started with Beetlejuice eDNA
                                                 </h2>
-                                                <p className="text-gray-600 dark:text-gray-300">
-                                                    Beetlejuice eDNA is a powerful tool designed to help you analyze environmental DNA data. 
-                                                    It provides intuitive visualization and analysis capabilities, making it easy to explore 
-                                                    relationships between environmental factors and biodiversity metrics.
-                                                </p>
+                                                <div className="prose dark:prose-invert max-w-none">
+                                                    <p className="text-gray-600 dark:text-gray-300">
+                                                        Welcome to Beetlejuice eDNA, your comprehensive tool for analyzing environmental DNA data. 
+                                                        This guide will help you get started with analyzing your data and exploring relationships 
+                                                        between environmental factors and biodiversity metrics.
+                                                    </p>
+                                                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                                                        <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">
+                                                            Quick Start
+                                                        </h3>
+                                                        <ol className="list-decimal list-inside space-y-2 text-blue-800 dark:text-blue-200">
+                                                            <li>Upload your Excel file with environmental and diversity data</li>
+                                                            <li>Choose an analysis mode based on your data format</li>
+                                                            <li>Review and confirm detected columns</li>
+                                                            <li>Explore relationships through interactive visualizations</li>
+                                                        </ol>
+                                                    </div>
+                                                </div>
                                             </section>
                                         )}
 
@@ -185,33 +228,62 @@ export default function DocumentationPage() {
                                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                                                     Data Requirements
                                                 </h2>
-                                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/40">
-                                                            <FileSpreadsheetIcon className="w-6 h-6 text-blue-500" />
+                                                <div className="grid gap-6">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+                                                        <div className="flex items-start gap-4">
+                                                            <div className="p-3 rounded-lg bg-blue-100/50 dark:bg-blue-900/50">
+                                                                <FileSpreadsheetIcon className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="font-medium text-gray-900 dark:text-white mb-3">
+                                                                    Excel File Format
+                                                                </h3>
+                                                                <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+                                                                    <li className="flex items-center gap-2">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                        File must be in .xlsx format
+                                                                    </li>
+                                                                    <li className="flex items-center gap-2">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                        First row should contain column headers
+                                                                    </li>
+                                                                    <li className="flex items-center gap-2">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                        Data should be organized in columns
+                                                                    </li>
+                                                                    <li className="flex items-center gap-2">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                        No empty rows or columns between data
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-3">
-                                                                Excel File Format
-                                                            </h3>
-                                                            <ul className="space-y-2 text-blue-800 dark:text-blue-200">
-                                                                <li className="flex items-center gap-2">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                                    File must be in .xlsx format
-                                                                </li>
-                                                                <li className="flex items-center gap-2">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                                    First row should contain column headers
-                                                                </li>
-                                                                <li className="flex items-center gap-2">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                                    Data should be organized in columns
-                                                                </li>
-                                                                <li className="flex items-center gap-2">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                                    No empty rows or columns between data
-                                                                </li>
-                                                            </ul>
+                                                    </div>
+
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+                                                        <div className="flex items-start gap-4">
+                                                            <div className="p-3 rounded-lg bg-green-100/50 dark:bg-green-900/50">
+                                                                <ChartBarIcon className="w-6 h-6 text-green-500 dark:text-green-400" />
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="font-medium text-gray-900 dark:text-white mb-3">
+                                                                    Data Types
+                                                                </h3>
+                                                                <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+                                                                    <li className="flex items-center gap-2">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                                        Environmental parameters (temperature, pH, etc.)
+                                                                    </li>
+                                                                    <li className="flex items-center gap-2">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                                        Diversity indices (Shannon, Simpson, etc.)
+                                                                    </li>
+                                                                    <li className="flex items-center gap-2">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                                        Taxonomic data (species counts, abundances)
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -224,10 +296,10 @@ export default function DocumentationPage() {
                                                     Analysis Modes
                                                 </h2>
                                                 <div className="grid gap-6">
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
                                                         <div className="flex items-start gap-4">
-                                                            <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                                                <SettingsIcon className="w-6 h-6 text-gray-500" />
+                                                            <div className="p-3 rounded-lg bg-blue-100/50 dark:bg-blue-900/50">
+                                                                <SettingsIcon className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                                                             </div>
                                                             <div>
                                                                 <h3 className="font-medium text-gray-900 dark:text-white mb-2">
@@ -237,14 +309,19 @@ export default function DocumentationPage() {
                                                                     Uses predefined column mappings for standard environmental and diversity metrics. 
                                                                     Best for data that follows the expected template format.
                                                                 </p>
+                                                                <div className="mt-4">
+                                                                    <span className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/50 rounded-lg px-2 py-0.5">
+                                                                        Recommended for standard data formats
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
                                                         <div className="flex items-start gap-4">
-                                                            <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                                                <BrainIcon className="w-6 h-6 text-gray-500" />
+                                                            <div className="p-3 rounded-lg bg-purple-100/50 dark:bg-purple-900/50">
+                                                                <BrainIcon className="w-6 h-6 text-purple-500 dark:text-purple-400" />
                                                             </div>
                                                             <div>
                                                                 <h3 className="font-medium text-gray-900 dark:text-white mb-2">
@@ -254,14 +331,19 @@ export default function DocumentationPage() {
                                                                     Combines template mapping with automatic column detection. 
                                                                     Helps identify additional columns that might not match the template exactly.
                                                                 </p>
+                                                                <div className="mt-4">
+                                                                    <span className="text-xs text-purple-500 hover:text-purple-600 dark:text-purple-400 bg-purple-100/50 dark:bg-purple-900/50 rounded-lg px-2 py-0.5">
+                                                                        Best balance of guidance and flexibility
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
                                                         <div className="flex items-start gap-4">
-                                                            <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                                                <ChartBarIcon className="w-6 h-6 text-gray-500" />
+                                                            <div className="p-3 rounded-lg bg-green-100/50 dark:bg-green-900/50">
+                                                                <ChartBarIcon className="w-6 h-6 text-green-500 dark:text-green-400" />
                                                             </div>
                                                             <div>
                                                                 <h3 className="font-medium text-gray-900 dark:text-white mb-2">
@@ -271,6 +353,11 @@ export default function DocumentationPage() {
                                                                     Automatically detects and classifies all columns in your data. 
                                                                     Best for non-standard data formats or when you&apos;re unsure about column types.
                                                                 </p>
+                                                                <div className="mt-4">
+                                                                    <span className="text-xs text-green-500 hover:text-green-600 dark:text-green-400 bg-green-100/50 dark:bg-green-900/50 rounded-lg px-2 py-0.5">
+                                                                        Most flexible for custom data formats
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -367,29 +454,46 @@ export default function DocumentationPage() {
                                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                                                     Tips and Best Practices
                                                 </h2>
-                                                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
-                                                    <ul className="space-y-3 text-green-800 dark:text-green-200">
-                                                        <li className="flex items-start gap-3">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2"></span>
-                                                            <span>Ensure your data is clean and properly formatted before uploading</span>
-                                                        </li>
-                                                        <li className="flex items-start gap-3">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2"></span>
-                                                            <span>Use descriptive column headers to help with auto-detection</span>
-                                                        </li>
-                                                        <li className="flex items-start gap-3">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2"></span>
-                                                            <span>Review the confidence scores for auto-detected columns</span>
-                                                        </li>
-                                                        <li className="flex items-start gap-3">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2"></span>
-                                                            <span>Start with a single plot and gradually add more as needed</span>
-                                                        </li>
-                                                        <li className="flex items-start gap-3">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2"></span>
-                                                            <span>Use the auto-generated plots to discover unexpected relationships</span>
-                                                        </li>
-                                                    </ul>
+                                                <div className="grid gap-6">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+                                                        <h3 className="font-medium text-gray-900 dark:text-white mb-4">
+                                                            Data Preparation
+                                                        </h3>
+                                                        <ul className="space-y-3 text-gray-600 dark:text-gray-300">
+                                                            <li className="flex items-start gap-3">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2"></span>
+                                                                <span>Ensure your data is clean and properly formatted before uploading</span>
+                                                            </li>
+                                                            <li className="flex items-start gap-3">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2"></span>
+                                                                <span>Use descriptive column headers to help with auto-detection</span>
+                                                            </li>
+                                                            <li className="flex items-start gap-3">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2"></span>
+                                                                <span>Remove any unnecessary formatting or special characters</span>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+                                                        <h3 className="font-medium text-gray-900 dark:text-white mb-4">
+                                                            Analysis Tips
+                                                        </h3>
+                                                        <ul className="space-y-3 text-gray-600 dark:text-gray-300">
+                                                            <li className="flex items-start gap-3">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2"></span>
+                                                                <span>Start with a single plot and gradually add more as needed</span>
+                                                            </li>
+                                                            <li className="flex items-start gap-3">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2"></span>
+                                                                <span>Use the auto-generated plots to discover unexpected relationships</span>
+                                                            </li>
+                                                            <li className="flex items-start gap-3">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2"></span>
+                                                                <span>Review the confidence scores for auto-detected columns</span>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
                                                 </div>
                                             </section>
                                         )}
@@ -402,8 +506,8 @@ export default function DocumentationPage() {
                                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                                                     Architecture Overview
                                                 </h2>
-                                                <div className="space-y-6">
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                                <div className="grid gap-6">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
                                                         <h3 className="font-medium text-gray-900 dark:text-white mb-4">
                                                             Project Structure
                                                         </h3>
@@ -413,47 +517,47 @@ export default function DocumentationPage() {
                                                         </p>
                                                         <ul className="space-y-3 text-gray-600 dark:text-gray-300">
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                                                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg text-sm">/src/app</code> - Next.js app router pages and layouts
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                <code className="bg-gray-100/50 dark:bg-gray-700/50 px-2 py-1 rounded-lg text-sm">/src/app</code> - Next.js app router pages and layouts
                                                             </li>
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                                                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg text-sm">/src/components</code> - Reusable React components
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                <code className="bg-gray-100/50 dark:bg-gray-700/50 px-2 py-1 rounded-lg text-sm">/src/components</code> - Reusable React components
                                                             </li>
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                                                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg text-sm">/src/utils</code> - Utility functions and data processing
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                <code className="bg-gray-100/50 dark:bg-gray-700/50 px-2 py-1 rounded-lg text-sm">/src/utils</code> - Utility functions and data processing
                                                             </li>
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                                                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg text-sm">/src/contexts</code> - React context providers
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                <code className="bg-gray-100/50 dark:bg-gray-700/50 px-2 py-1 rounded-lg text-sm">/src/contexts</code> - React context providers
                                                             </li>
                                                         </ul>
                                                     </div>
 
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
                                                         <h3 className="font-medium text-gray-900 dark:text-white mb-4">
                                                             Key Technologies
                                                         </h3>
                                                         <ul className="space-y-3 text-gray-600 dark:text-gray-300">
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                                                                 Next.js 13+ with App Router
                                                             </li>
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                                                                 React with TypeScript
                                                             </li>
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                                                                 Tailwind CSS for styling
                                                             </li>
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                                                                 Plotly.js for data visualization
                                                             </li>
                                                             <li className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                                                                 XLSX.js for Excel file processing
                                                             </li>
                                                         </ul>
@@ -467,8 +571,8 @@ export default function DocumentationPage() {
                                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                                                     Components
                                                 </h2>
-                                                <div className="space-y-6">
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                                <div className="grid gap-6">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
                                                         <h3 className="font-medium text-gray-900 dark:text-white mb-4">
                                                             Core Components
                                                         </h3>
@@ -511,8 +615,8 @@ export default function DocumentationPage() {
                                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                                                     Utilities
                                                 </h2>
-                                                <div className="space-y-6">
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                                <div className="grid gap-6">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
                                                         <h3 className="font-medium text-gray-900 dark:text-white mb-4">
                                                             Data Processing
                                                         </h3>
@@ -555,8 +659,8 @@ export default function DocumentationPage() {
                                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                                                     Contexts
                                                 </h2>
-                                                <div className="space-y-6">
-                                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                                <div className="grid gap-6">
+                                                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
                                                         <h3 className="font-medium text-gray-900 dark:text-white mb-4">
                                                             State Management
                                                         </h3>
@@ -591,6 +695,13 @@ export default function DocumentationPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Footer */}
+            <footer className="fixed bottom-0 left-0 w-full p-4 backdrop-blur-sm bg-white/50 dark:bg-gray-900/50 border-t border-gray-200/50 dark:border-gray-700/50">
+                <div className="max-w-7xl mx-auto text-center text-sm text-gray-600 dark:text-gray-400">
+                    <p>Developed by <Link href="https://www.uwyo.edu/wyominginbre/index.html" target="_blank" className="text-gray-900 dark:text-white hover:underline">Wyoming INBRE</Link> and <Link href="https://www.lccc.wy.edu" target="_blank" className="text-gray-900 dark:text-white hover:underline">Laramie County Community College</Link></p>
+                </div>
+            </footer>
         </div>
     );
 } 
