@@ -27,6 +27,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${publicSans.variable} antialiased`}>
         <SpeedInsights />
+        <Analytics />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <FileProvider>
             <AnalysisModeProvider>
