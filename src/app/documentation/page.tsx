@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeftIcon, FileSpreadsheetIcon, ChartBarIcon, BrainIcon, SettingsIcon, BookOpenIcon, ChevronRightIcon, ChevronDownIcon, MenuIcon } from 'lucide-react';
+import { ArrowLeftIcon, FileSpreadsheetIcon, ChartBarIcon, BrainIcon, SettingsIcon, ChevronRightIcon, ChevronDownIcon, MenuIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -275,7 +275,7 @@ export default function DocumentationPage() {
                                                 <div>
                                                     <p className="text-gray-600 dark:text-gray-300">
                                                         Automatically detects and classifies all columns in your data. 
-                                                        Best for non-standard data formats or when you're unsure about column types.
+                                                        Best for non-standard data formats or when you&apos;re unsure about column types.
                                                     </p>
                                                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                                         Most flexible for custom data formats
@@ -293,7 +293,7 @@ export default function DocumentationPage() {
                                                 Select Analysis Mode
                                             </h2>
                                             <p className="text-gray-600 dark:text-gray-300">
-                                                Choose the analysis mode that best fits your data. If you're unsure, 
+                                                Choose the analysis mode that best fits your data. If you&apos;re unsure, 
                                                 start with Template + Auto Detection for the best balance of guidance and flexibility.
                                             </p>
                                         </section>
