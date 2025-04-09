@@ -1,9 +1,21 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 import { ProcessedData } from '@/utils/dataProcessing';
 import { getDataByVariable } from '@/utils/dataAccess';
 import { useTheme } from 'next-themes';
+import {
+    ScatterChart,
+    Scatter,
+    XAxis,
+    YAxis,
+    ZAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    ReferenceLine,
+    Brush
+} from 'recharts';
 
 interface ScatterPlotProps {
     data: ProcessedData;
@@ -13,190 +25,197 @@ interface ScatterPlotProps {
     showCorrelationLine?: boolean;
 }
 
-export const ScatterPlot: React.FC<ScatterPlotProps> = ({ data, xVariable, yVariable, height = 400, showCorrelationLine = false }) => {
-    const plotRef = useRef<HTMLDivElement>(null);
-    const { theme } = useTheme();
-    const isDarkMode = theme === 'dark';
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+    data: ProcessedData;
+}
 
-    useEffect(() => {
-        if (!plotRef.current) return;
-
-        const plotElement = plotRef.current;
-        const xData = getDataByVariable(data, xVariable);
-        const yData = getDataByVariable(data, yVariable);
-
+const CustomTooltip = ({ active, payload, data }: CustomTooltipProps) => {
+    if (active && payload && payload.length) {
+        const point = payload[0].payload;
+        const index = payload[0].payload.index;
+        
         // Get all available variables
         const envVars = Object.keys(data.environmentalFactors);
         const divVars = Object.keys(data.diversityIndices);
 
-        // Create hover text with all data points
-        const hoverText = xData.map((_, index) => {
-            const sampleCode = data.metadata.sampleCodes[index];
-            const envValues = envVars.map(varName => {
-                const value = getDataByVariable(data, varName)[index];
-                const formattedValue = typeof value === 'number' ? value.toFixed(3) : value;
-                return `${varName}: ${formattedValue}`;
-            });
-            
-            const divValues = divVars.map(varName => {
-                const value = getDataByVariable(data, varName)[index];
-                const formattedValue = typeof value === 'number' ? value.toFixed(3) : value;
-                return `${varName}: ${formattedValue}`;
-            });
+        return (
+            <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[300px] overflow-y-auto">
+                <p className="font-bold text-sm mb-1">Sample: {data.metadata.sampleCodes[index]}</p>
+                <div className="space-y-1 text-xs">
+                    <div className="grid grid-cols-2 gap-x-4">
+                        <div>
+                            <p className="font-semibold text-xs">Environmental:</p>
+                            {envVars.map(varName => {
+                                const value = getDataByVariable(data, varName)[index];
+                                const formattedValue = typeof value === 'number' ? value.toFixed(3) : value;
+                                return (
+                                    <p key={varName} className="truncate">
+                                        {varName}: {formattedValue}
+                                    </p>
+                                );
+                            })}
+                        </div>
+                        <div>
+                            <p className="font-semibold text-xs">Diversity:</p>
+                            {divVars.map(varName => {
+                                const value = getDataByVariable(data, varName)[index];
+                                const formattedValue = typeof value === 'number' ? value.toFixed(3) : value;
+                                return (
+                                    <p key={varName} className="truncate">
+                                        {varName}: {formattedValue}
+                                    </p>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
 
-            return [
-                `<b>Sample: ${sampleCode}</b>`,
-                '<br><b>Environmental Factors:</b>',
-                ...envValues,
-                '<br><b>Diversity Indices:</b>',
-                ...divValues
-            ].join('<br>');
-        });
+export const ScatterPlot: React.FC<ScatterPlotProps> = ({ 
+    data, 
+    xVariable, 
+    yVariable, 
+    height = 500,
+    showCorrelationLine = false 
+}) => {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
 
-        // Calculate correlation line if needed
-        let correlationLine = null;
-        if (showCorrelationLine) {
-            // Calculate correlation coefficient
-            const n = xData.length;
-            const sumX = xData.reduce((a, b) => a + b, 0);
-            const sumY = yData.reduce((a, b) => a + b, 0);
-            const sumXY = xData.reduce((sum, x, i) => sum + x * yData[i], 0);
-            const sumX2 = xData.reduce((sum, x) => sum + x * x, 0);
-            const sumY2 = yData.reduce((sum, y) => sum + y * y, 0);
-            
-            const correlation = (n * sumXY - sumX * sumY) / 
-                              Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-            
-            // Calculate line of best fit
-            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-            const intercept = (sumY - slope * sumX) / n;
-            
-            // Create line points
-            const minX = Math.min(...xData);
-            const maxX = Math.max(...xData);
-            const lineX = [minX, maxX];
-            const lineY = lineX.map(x => slope * x + intercept);
-            
-            correlationLine = {
-                x: lineX,
-                y: lineY,
-                type: 'scatter' as const,
-                mode: 'lines' as const,
-                line: {
-                    color: isDarkMode ? '#93C5FD' : '#1D4ED8',
-                    width: 2,
-                    dash: 'dash' as const
-                },
-                name: `Correlation: ${correlation.toFixed(3)}`,
-                showlegend: true
-            };
-        }
+    // Prepare the data for the scatter plot
+    const plotData = useMemo(() => {
+        const xData = getDataByVariable(data, xVariable);
+        const yData = getDataByVariable(data, yVariable);
+        
+        return xData.map((x, index) => ({
+            x,
+            y: yData[index],
+            index
+        }));
+    }, [data, xVariable, yVariable]);
 
-        const plotData = [
-            {
-                x: xData,
-                y: yData,
-                mode: 'markers' as const,
-                type: 'scatter' as const,
-                marker: {
-                    size: 6
-                },
-                hovertemplate: '%{text}<extra></extra>',
-                text: hoverText,
-                hoverlabel: {
-                    bgcolor: isDarkMode ? '#374151' : '#FFFFFF',
-                    bordercolor: isDarkMode ? '#4B5563' : '#E5E7EB',
-                    font: { 
-                        family: 'monospace',
-                        size: 10,
-                        color: isDarkMode ? '#FFFFFF' : '#000000'
-                    }
-                }
-            },
-            ...(correlationLine ? [correlationLine] : [])
-        ];
-
-        const layout = {
-            height: height,
-            width: undefined,
-            autosize: true,
-            title: `${yVariable} vs ${xVariable}`,
-            xaxis: {
-                title: xVariable,
-                automargin: true,
-                color: isDarkMode ? '#E5E7EB' : '#1F2937',
-                gridcolor: isDarkMode ? '#4B5563' : '#E5E7EB',
-                zerolinecolor: isDarkMode ? '#6B7280' : '#9CA3AF'
-            },
-            yaxis: {
-                title: yVariable,
-                automargin: true,
-                color: isDarkMode ? '#E5E7EB' : '#1F2937',
-                gridcolor: isDarkMode ? '#4B5563' : '#E5E7EB',
-                zerolinecolor: isDarkMode ? '#6B7280' : '#9CA3AF'
-            },
-            margin: {
-                l: 50,
-                r: 30,
-                t: 50,
-                b: 50,
-                pad: 0
-            },
-            showlegend: showCorrelationLine,
-            legend: {
-                orientation: 'h' as const,
-                yanchor: 'bottom' as const,
-                y: 1.02,
-                xanchor: 'right' as const,
-                x: 1,
-                font: {
-                    color: isDarkMode ? '#E5E7EB' : '#1F2937'
-                }
-            },
-            plot_bgcolor: isDarkMode ? '#1F2937' : '#FFFFFF',
-            paper_bgcolor: isDarkMode ? '#1F2937' : '#FFFFFF',
-            hovermode: 'closest' as const,
-            hoverdistance: -1,
-            hoverlabel: {
-                namelength: -1,
-                align: 'left' as const,
-                font: {
-                    color: isDarkMode ? '#E5E7EB' : '#1F2937'
-                },
-                bgcolor: isDarkMode ? '#374151' : '#FFFFFF',
-                bordercolor: isDarkMode ? '#4B5563' : '#E5E7EB'
-            }
+    // Calculate initial domains with padding
+    const { xDomain, yDomain } = useMemo(() => {
+        const xData = getDataByVariable(data, xVariable);
+        const yData = getDataByVariable(data, yVariable);
+        
+        const minX = Math.min(...xData);
+        const maxX = Math.max(...xData);
+        const minY = Math.min(...yData);
+        const maxY = Math.max(...yData);
+        
+        // Add 5% padding to the domains
+        const xPadding = (maxX - minX) * 0.05;
+        const yPadding = (maxY - minY) * 0.05;
+        
+        return {
+            xDomain: [minX - xPadding, maxX + xPadding],
+            yDomain: [minY - yPadding, maxY + yPadding]
         };
+    }, [data, xVariable, yVariable]);
 
-        const config = {
-            displayModeBar: true,
-            responsive: true,
-            displaylogo: false,
-            scrollZoom: true
+    // Calculate correlation line if needed
+    const correlationLine = useMemo(() => {
+        if (!showCorrelationLine) return null;
+
+        const xData = getDataByVariable(data, xVariable);
+        const yData = getDataByVariable(data, yVariable);
+        
+        // Calculate correlation coefficient and line of best fit
+        const n = xData.length;
+        const sumX = xData.reduce((a, b) => a + b, 0);
+        const sumY = yData.reduce((a, b) => a + b, 0);
+        const sumXY = xData.reduce((sum, x, i) => sum + x * yData[i], 0);
+        const sumX2 = xData.reduce((sum, x) => sum + x * x, 0);
+        
+        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        const intercept = (sumY - slope * sumX) / n;
+        
+        return {
+            slope,
+            intercept,
+            correlation: (n * sumXY - sumX * sumY) / 
+                        Math.sqrt((n * sumX2 - sumX * sumX) * 
+                                (n * yData.reduce((sum, y) => sum + y * y, 0) - sumY * sumY))
         };
+    }, [data, xVariable, yVariable, showCorrelationLine]);
 
-        const renderPlot = async () => {
-            const Plotly = (await import('plotly.js-dist-min')).default;
-            await Plotly.newPlot(plotElement, plotData, layout, config);
-        };
-
-        renderPlot();
-
-        return () => {
-            if (plotElement) {
-                (async () => {
-                    const Plotly = (await import('plotly.js-dist-min')).default;
-                    Plotly.purge(plotElement);
-                })();
-            }
-        };
-    }, [data, xVariable, yVariable, height, isDarkMode, showCorrelationLine]);
-
-    return <div ref={plotRef} style={{ 
-        width: '100%', 
-        height: '100%', 
-        position: 'relative',
-        zIndex: 10,
-        pointerEvents: 'auto'
-    }} />;
+    return (
+        <div className="relative" style={{ width: '100%', height }}>
+            <ResponsiveContainer>
+                <ScatterChart
+                    margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                >
+                    <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke={isDarkMode ? '#4B5563' : '#E5E7EB'}
+                    />
+                    <XAxis
+                        type="number"
+                        dataKey="x"
+                        name={xVariable}
+                        stroke={isDarkMode ? '#E5E7EB' : '#1F2937'}
+                        tick={{ 
+                            fill: isDarkMode ? '#E5E7EB' : '#1F2937',
+                            fontSize: 12,
+                            dy: 5
+                        }}
+                        allowDataOverflow={true}
+                        scale="auto"
+                        domain={xDomain}
+                    />
+                    <YAxis
+                        type="number"
+                        dataKey="y"
+                        name={yVariable}
+                        stroke={isDarkMode ? '#E5E7EB' : '#1F2937'}
+                        tick={{ 
+                            fill: isDarkMode ? '#E5E7EB' : '#1F2937',
+                            fontSize: 12,
+                            dx: -5
+                        }}
+                        allowDataOverflow={true}
+                        scale="auto"
+                        domain={yDomain}
+                    />
+                    <ZAxis range={[50]} />
+                    <Tooltip content={<CustomTooltip data={data} />} />
+                    <Scatter
+                        data={plotData}
+                        fill={isDarkMode ? '#93C5FD' : '#1D4ED8'}
+                        isAnimationActive={false}
+                    />
+                    {correlationLine && (
+                        <ReferenceLine
+                            segment={[
+                                { x: xDomain[0], y: correlationLine.slope * xDomain[0] + correlationLine.intercept },
+                                { x: xDomain[1], y: correlationLine.slope * xDomain[1] + correlationLine.intercept }
+                            ]}
+                            stroke={isDarkMode ? '#93C5FD' : '#1D4ED8'}
+                            strokeDasharray="5 5"
+                            label={{
+                                value: `Correlation: ${correlationLine.correlation.toFixed(3)}`,
+                                position: 'insideTopRight',
+                                fill: isDarkMode ? '#E5E7EB' : '#1F2937',
+                                fontSize: 12
+                            }}
+                        />
+                    )}
+                    <Brush
+                        dataKey="x"
+                        height={30}
+                        stroke={isDarkMode ? '#93C5FD' : '#1D4ED8'}
+                        fill={isDarkMode ? '#1F2937' : '#FFFFFF'}
+                        travellerWidth={8}
+                    />
+                </ScatterChart>
+            </ResponsiveContainer>
+        </div>
+    );
 };

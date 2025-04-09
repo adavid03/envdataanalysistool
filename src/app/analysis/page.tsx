@@ -507,7 +507,7 @@ export default function AnalysisPage() {
                                                             <span>Show Correlation Line</span>
                                                         </label>
                                                     </div>
-                                                    <div className="w-full h-[calc(100%-40px)]">
+                                                    <div className="w-full h-[calc(100%-40px)] p-5">
                                                         <ScatterPlot
                                                             data={data}
                                                             xVariable={plot.xVariable}
