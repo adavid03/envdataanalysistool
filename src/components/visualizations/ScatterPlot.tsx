@@ -27,14 +27,19 @@ interface ScatterPlotProps {
 
 interface CustomTooltipProps {
     active?: boolean;
-    payload?: any[];
+    payload?: {
+        payload: {
+            x: number;
+            y: number;
+            index: number;
+        };
+    }[];
     label?: string;
     data: ProcessedData;
 }
 
 const CustomTooltip = ({ active, payload, data }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
-        const point = payload[0].payload;
         const index = payload[0].payload.index;
         
         // Get all available variables
