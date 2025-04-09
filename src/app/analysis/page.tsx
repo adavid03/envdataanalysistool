@@ -59,7 +59,7 @@ interface PlotConfig {
     yVariable: string;
     warning?: string;
     correlation?: number;
-    showCorrelationLine?: boolean;
+    showCorrelationLine: boolean;
 }
 
 interface SignificantRelationship {
@@ -401,21 +401,24 @@ export default function AnalysisPage() {
                                                         setPlots(prev => [...prev, {
                                                             id: String(prev.length + 1),
                                                             xVariable: '',
-                                                            yVariable: ''
+                                                            yVariable: '',
+                                                            showCorrelationLine: false
                                                         }]);
                                                     } else if (type === 'water' && availableEnv.length > 1) {
                                                         // Water Chemistry: env vs env
                                                         setPlots(prev => [...prev, {
                                                             id: String(prev.length + 1),
                                                             xVariable: availableEnv[0].value,
-                                                            yVariable: availableEnv[1].value
+                                                            yVariable: availableEnv[1].value,
+                                                            showCorrelationLine: false
                                                         }]);
                                                     } else if (type === 'diversity' && availableEnv.length > 0 && availableDiv.length > 0) {
                                                         // Diversity: env vs diversity
                                                         setPlots(prev => [...prev, {
                                                             id: String(prev.length + 1),
                                                             xVariable: availableEnv[0].value,
-                                                            yVariable: availableDiv[0].value
+                                                            yVariable: availableDiv[0].value,
+                                                            showCorrelationLine: false
                                                         }]);
                                                     }
                                                 }}
@@ -447,7 +450,7 @@ export default function AnalysisPage() {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     {plots.map((plot, index) => (
-                                        <div key={plot.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                                        <div key={plot.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden pb-5">
                                             <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 p-4">
                                                 <div className="flex justify-between items-center mb-4">
                                                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
@@ -493,7 +496,7 @@ export default function AnalysisPage() {
 
                                             {plot.xVariable && plot.yVariable && (
                                                 <div className="w-full" style={{ height: 300 }}>
-                                                    <div className="flex items-center gap-2 mb-2 px-4 py-1">
+                                                    <div className="flex items-center gap-2 px-5 py-1">
                                                         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                                                             <input
                                                                 type="checkbox"
@@ -504,13 +507,15 @@ export default function AnalysisPage() {
                                                             <span>Show Correlation Line</span>
                                                         </label>
                                                     </div>
-                                                    <ScatterPlot
-                                                        data={data}
-                                                        xVariable={plot.xVariable}
-                                                        yVariable={plot.yVariable}
-                                                        height={300}
-                                                        showCorrelationLine={plot.showCorrelationLine}
-                                                    />
+                                                    <div className="w-full h-[calc(100%-40px)]">
+                                                        <ScatterPlot
+                                                            data={data}
+                                                            xVariable={plot.xVariable}
+                                                            yVariable={plot.yVariable}
+                                                            height={300}
+                                                            showCorrelationLine={plot.showCorrelationLine}
+                                                        />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

@@ -83,7 +83,7 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ data, xVariable, yVari
                 type: 'scatter' as const,
                 mode: 'lines' as const,
                 line: {
-                    color: isDarkMode ? '#60A5FA' : '#2563EB',
+                    color: isDarkMode ? '#93C5FD' : '#1D4ED8',
                     width: 2,
                     dash: 'dash' as const
                 },
@@ -123,11 +123,17 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ data, xVariable, yVari
             title: `${yVariable} vs ${xVariable}`,
             xaxis: {
                 title: xVariable,
-                automargin: true
+                automargin: true,
+                color: isDarkMode ? '#E5E7EB' : '#1F2937',
+                gridcolor: isDarkMode ? '#4B5563' : '#E5E7EB',
+                zerolinecolor: isDarkMode ? '#6B7280' : '#9CA3AF'
             },
             yaxis: {
                 title: yVariable,
-                automargin: true
+                automargin: true,
+                color: isDarkMode ? '#E5E7EB' : '#1F2937',
+                gridcolor: isDarkMode ? '#4B5563' : '#E5E7EB',
+                zerolinecolor: isDarkMode ? '#6B7280' : '#9CA3AF'
             },
             margin: {
                 l: 50,
@@ -142,7 +148,10 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ data, xVariable, yVari
                 yanchor: 'bottom' as const,
                 y: 1.02,
                 xanchor: 'right' as const,
-                x: 1
+                x: 1,
+                font: {
+                    color: isDarkMode ? '#E5E7EB' : '#1F2937'
+                }
             },
             plot_bgcolor: isDarkMode ? '#1F2937' : '#FFFFFF',
             paper_bgcolor: isDarkMode ? '#1F2937' : '#FFFFFF',
@@ -150,14 +159,20 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ data, xVariable, yVari
             hoverdistance: -1,
             hoverlabel: {
                 namelength: -1,
-                align: 'left' as const
+                align: 'left' as const,
+                font: {
+                    color: isDarkMode ? '#E5E7EB' : '#1F2937'
+                },
+                bgcolor: isDarkMode ? '#374151' : '#FFFFFF',
+                bordercolor: isDarkMode ? '#4B5563' : '#E5E7EB'
             }
         };
 
         const config = {
-            displayModeBar: 'hover' as const,
+            displayModeBar: true,
             responsive: true,
-            displaylogo: false
+            displaylogo: false,
+            scrollZoom: true
         };
 
         const renderPlot = async () => {
@@ -177,5 +192,11 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ data, xVariable, yVari
         };
     }, [data, xVariable, yVariable, height, isDarkMode, showCorrelationLine]);
 
-    return <div ref={plotRef} style={{ width: '100%', height: `${height}px`, minHeight: `${height}px`, position: 'relative', zIndex: 0 }} />;
+    return <div ref={plotRef} style={{ 
+        width: '100%', 
+        height: '100%', 
+        position: 'relative',
+        zIndex: 10,
+        pointerEvents: 'auto'
+    }} />;
 };
