@@ -109,22 +109,37 @@ export default function Home() {
     }
   };
 
+  const getBackgroundClasses = () => {
+    const baseClasses = "fixed inset-0 -z-10 transition-all duration-700 ease-in-out";
+    switch (mode) {
+      case 'template':
+        return `${baseClasses} bg-gradient-to-br from-blue-50/90 to-blue-100/90 dark:from-blue-900/15 dark:to-blue-800/15`;
+      case 'template-auto':
+        return `${baseClasses} bg-gradient-to-br from-purple-50/90 to-purple-100/90 dark:from-purple-900/15 dark:to-purple-800/15`;
+      case 'full-auto':
+        return `${baseClasses} bg-gradient-to-br from-green-50/90 to-green-100/90 dark:from-green-900/15 dark:to-green-800/15`;
+      default:
+        return `${baseClasses} bg-gradient-to-br from-blue-50/90 to-blue-100/90 dark:from-blue-900/15 dark:to-blue-800/15`;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen relative">
+      <div className={getBackgroundClasses()} />
       <div className="fixed top-0 left-0 w-full p-4 backdrop-blur-sm bg-white/50 dark:bg-gray-900/50 z-10 border-b border-gray-200/50 dark:border-gray-700/50">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-          <Image
-            src="/beetle.png"
-            alt="Beetlejuice eDNA"
+            <Image
+              src="/beetle.png"
+              alt="Beetlejuice eDNA"
               width={32}
               height={32}
               className="w-8 dark:invert"
             />
             <h1 className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
-            Beetlejuice eDNA
-          </h1>
-        </div>
+              Beetlejuice eDNA
+            </h1>
+          </div>
           <Link
             href="/documentation"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
@@ -134,7 +149,6 @@ export default function Home() {
           </Link>
         </div>
       </div>
-
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Header */}
@@ -145,17 +159,17 @@ export default function Home() {
             <p className="text-lg text-gray-600 dark:text-gray-400">
               Upload your eDNA data to begin analysis
             </p>
-        </div>
+          </div>
 
           {/* Main Content Grid */}
           <div className="grid md:grid-cols-2 gap-6">
             {/* Analysis Mode Selection */}
             <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 h-fit">
               <label className="block text-sm font-medium text-gray-900 dark:text-white mb-4">
-            Analysis Mode
-          </label>
+                Analysis Mode
+              </label>
               <div className="space-y-3">
-                <label className={`block relative p-3 rounded-lg border transition-all cursor-pointer
+                <label className={`block relative p-3 rounded-lg border transition-all duration-700 ease-in-out cursor-pointer
                   ${mode === 'template' 
                     ? 'bg-blue-50/50 dark:bg-blue-900/50 border-blue-200 dark:border-blue-800 ring-2 ring-blue-500/50' 
                     : 'bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800'}`}
@@ -181,7 +195,7 @@ export default function Home() {
                           Standard Template
                         </p>
                         <Link 
-                          href="/documentation#template-format" 
+                          href="/documentation#file-format" 
                           target="_blank"
                           className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/50 rounded-lg px-2 py-0.5"
                         >
@@ -195,7 +209,7 @@ export default function Home() {
                   </div>
                 </label>
 
-                <label className={`block relative p-3 rounded-lg border transition-all cursor-pointer
+                <label className={`block relative p-3 rounded-lg border transition-all duration-700 ease-in-out cursor-pointer
                   ${mode === 'template-auto' 
                     ? 'bg-purple-50/50 dark:bg-purple-900/50 border-purple-200 dark:border-purple-800 ring-2 ring-purple-500/50' 
                     : 'bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-800'}`}
@@ -226,7 +240,7 @@ export default function Home() {
                   </div>
                 </label>
 
-                <label className={`block relative p-3 rounded-lg border transition-all cursor-pointer
+                <label className={`block relative p-3 rounded-lg border transition-all duration-700 ease-in-out cursor-pointer
                   ${mode === 'full-auto' 
                     ? 'bg-green-50/50 dark:bg-green-900/50 border-green-200 dark:border-green-800 ring-2 ring-green-500/50' 
                     : 'bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-800'}`}
@@ -257,75 +271,80 @@ export default function Home() {
                   </div>
                 </label>
               </div>
-        </div>
+            </div>
 
-        {/* File Drop Zone */}
-        <div
-          className={getDropZoneClasses()}
-          onDragEnter={dragAndDropHandlers.handleDragIn}
-          onDragLeave={dragAndDropHandlers.handleDragOut}
-          onDragOver={dragAndDropHandlers.handleDrag}
-          onDrop={dragAndDropHandlers.handleDrop}
-          onClick={() => !file && document.getElementById('file-upload')?.click()}
-          style={{ cursor: file ? 'default' : 'pointer' }}
-        >
+            {/* File Drop Zone */}
+            <div
+              className={getDropZoneClasses()}
+              onDragEnter={dragAndDropHandlers.handleDragIn}
+              onDragLeave={dragAndDropHandlers.handleDragOut}
+              onDragOver={dragAndDropHandlers.handleDrag}
+              onDrop={dragAndDropHandlers.handleDrop}
+              onClick={() => !file && document.getElementById('file-upload')?.click()}
+              style={{ cursor: file ? 'default' : 'pointer' }}
+            >
               <div className="flex flex-col items-center justify-center h-full gap-4">
-            {!file ? (
+                {!file ? (
                   <>
                     <div className="p-4 rounded-full bg-blue-100/50 dark:bg-blue-900/50 ring-1 ring-blue-500/20 dark:ring-blue-400/20">
                       <CloudUploadIcon className="w-8 h-8 text-blue-500 dark:text-blue-400" />
-                </div>
-                <div className="text-center">
+                    </div>
+                    <div className="text-center">
                       <p className="text-lg font-medium text-gray-900 dark:text-white">
-                    Drop your Excel file here
-                  </p>
+                        Drop your Excel file here
+                      </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    or click anywhere to select a file
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  accept=".xlsx"
-                  className="hidden"
-                  id="file-upload"
-                  onChange={dragAndDropHandlers.handleFileInput}
-                />
-              </>
-            ) : (
-              <div className="animate-fadeIn flex flex-col items-center gap-4">
+                        or click anywhere to select a file
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".xlsx"
+                      className="hidden"
+                      id="file-upload"
+                      onChange={dragAndDropHandlers.handleFileInput}
+                    />
+                  </>
+                ) : (
+                  <div className="animate-fadeIn flex flex-col items-center gap-4">
                     <div className="p-4 rounded-full bg-green-100/50 dark:bg-green-900/50 ring-1 ring-green-500/20 dark:ring-green-400/20">
                       <CheckCircleIcon className="w-8 h-8 text-green-500 dark:text-green-400" />
-                </div>
-                <div className="text-center">
+                    </div>
+                    <div className="text-center">
                       <p className="text-lg font-medium text-gray-900 dark:text-white">
-                    File ready!
-                  </p>
+                        File ready!
+                      </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {file.name}
-                  </p>
-                </div>
-                <button
-                  onClick={removeFile}
+                        {file.name}
+                      </p>
+                    </div>
+                    <button
+                      onClick={removeFile}
                       className="text-sm px-4 py-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 transition-colors"
-                >
-                  Remove File
-                </button>
+                    >
+                      Remove File
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-              </div>
+            </div>
           </div>
         </div>
 
         {/* Analysis Button */}
-        <div className="relative max-w-md mx-auto group">
+        <div className="relative max-w-md mx-auto group mt-10">
           <button
             onClick={handleAnalyze}
             disabled={!file || !mode || isAnalyzing}
-            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-700 ease-in-out ${
               file && mode
                 ? isAnalyzing
                   ? 'bg-blue-400 dark:bg-blue-500 cursor-wait text-white'
-                  : 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white hover:gap-3'
+                  : mode === 'template'
+                    ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white hover:gap-3'
+                    : mode === 'template-auto'
+                      ? 'bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white hover:gap-3'
+                      : 'bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white hover:gap-3'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
             }`}
           >
@@ -366,7 +385,6 @@ export default function Home() {
             </div>
           )}
         </div>
-        </div>
       </main>
 
       {/* Footer */}
@@ -374,13 +392,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto text-center text-sm text-gray-600 dark:text-gray-400">
           Made possible by{' '}
           <Link href="https://www.uwyo.edu/wyominginbre/index.html" target="_blank" className="text-gray-900 dark:text-white hover:underline">
-          Wyoming INBRE
+            Wyoming INBRE
           </Link>
           {' & '}
           <Link href="https://www.lccc.wy.edu" target="_blank" className="text-gray-900 dark:text-white hover:underline">
             LCCC
           </Link>
-      </div>
+        </div>
       </footer>
     </div>
   );

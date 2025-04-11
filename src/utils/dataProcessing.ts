@@ -98,59 +98,97 @@ export async function processExcelFile(file: File): Promise<ProcessedData> {
             }),
             locations: {
               lat: jsonData.map(row => {
-                if (typeof row['Latitude'] !== 'number') console.warn('Invalid Latitude in row:', row);
+                if (typeof row['Latitude'] !== 'number') {
+                  console.warn('Invalid Latitude in row:', row);
+                  return NaN;
+                }
                 return row['Latitude'];
               }),
               long: jsonData.map(row => {
-                if (typeof row['Longitude'] !== 'number') console.warn('Invalid Longitude in row:', row);
+                if (typeof row['Longitude'] !== 'number') {
+                  console.warn('Invalid Longitude in row:', row);
+                  return NaN;
+                }
                 return row['Longitude'];
               }),
             },
           },
           environmentalFactors: {
             temperature: jsonData.map(row => {
-              if (typeof row['Avg Temperature'] !== 'number') console.warn('Invalid Temperature in row:', row);
+              if (typeof row['Avg Temperature'] !== 'number') {
+                console.warn('Invalid Temperature in row:', row);
+                return NaN;
+              }
               return row['Avg Temperature'];
             }),
             departure: jsonData.map(row => {
-              if (typeof row['Departure'] !== 'number') console.warn('Invalid Departure in row:', row);
+              if (typeof row['Departure'] !== 'number') {
+                console.warn('Invalid Departure in row:', row);
+                return NaN;
+              }
               return row['Departure'];
             }),
             ph: jsonData.map(row => {
-              if (typeof row['pH'] !== 'number') console.warn('Invalid pH in row:', row);
+              if (typeof row['pH'] !== 'number') {
+                console.warn('Invalid pH in row:', row);
+                return NaN;
+              }
               return row['pH'];
             }),
             elevation: jsonData.map(row => {
-              if (typeof row['Elevation'] !== 'number') console.warn('Invalid Elevation in row:', row);
+              if (typeof row['Elevation'] !== 'number') {
+                console.warn('Invalid Elevation in row:', row);
+                return NaN;
+              }
               return row['Elevation'];
             }),
             hardness: jsonData.map(row => {
-              if (typeof row['General hardness (calcium carbonate)'] !== 'number') 
+              if (typeof row['General hardness (calcium carbonate)'] !== 'number') {
                 console.warn('Invalid Hardness in row:', row);
+                return NaN;
+              }
               return row['General hardness (calcium carbonate)'];
             }),
             alkalinity: jsonData.map(row => {
-              if (typeof row['Total alkalinity '] !== 'number') console.warn('Invalid Alkalinity in row:', row);
+              if (typeof row['Total alkalinity '] !== 'number') {
+                console.warn('Invalid Alkalinity in row:', row);
+                return NaN;
+              }
               return row['Total alkalinity '];
             }),
             carbonate: jsonData.map(row => {
-              if (typeof row['Carbonate '] !== 'number') console.warn('Invalid Carbonate in row:', row);
+              if (typeof row['Carbonate '] !== 'number') {
+                console.warn('Invalid Carbonate in row:', row);
+                return NaN;
+              }
               return row['Carbonate '];
             }),
             phosphate: jsonData.map(row => {
-              if (typeof row['Phosphate'] !== 'number') console.warn('Invalid Phosphate in row:', row);
+              if (typeof row['Phosphate'] !== 'number') {
+                console.warn('Invalid Phosphate in row:', row);
+                return NaN;
+              }
               return row['Phosphate'];
             }),
             nitrate: jsonData.map(row => {
-              if (typeof row['Nitrate  '] !== 'number') console.warn('Invalid Nitrate in row:', row);
+              if (typeof row['Nitrate  '] !== 'number') {
+                console.warn('Invalid Nitrate in row:', row);
+                return NaN;
+              }
               return row['Nitrate  '];
             }),
             nitrite: jsonData.map(row => {
-              if (typeof row['Nitrite '] !== 'number') console.warn('Invalid Nitrite in row:', row);
+              if (typeof row['Nitrite '] !== 'number') {
+                console.warn('Invalid Nitrite in row:', row);
+                return NaN;
+              }
               return row['Nitrite '];
             }),
             chlorine: jsonData.map(row => {
-              if (typeof row['Free chlorine'] !== 'number') console.warn('Invalid Chlorine in row:', row);
+              if (typeof row['Free chlorine'] !== 'number') {
+                console.warn('Invalid Chlorine in row:', row);
+                return NaN;
+              }
               return row['Free chlorine'];
             }),
             radioactivity: jsonData.map(row => {
@@ -162,52 +200,75 @@ export async function processExcelFile(file: File): Promise<ProcessedData> {
               return value.toLowerCase() === 'yes' ? 1 : 0;
             }),
             longitude: jsonData.map(row => {
-              if (typeof row['Longitude'] !== 'number') console.warn('Invalid Longitude in row:', row);
+              if (typeof row['Longitude'] !== 'number') {
+                console.warn('Invalid Longitude in row:', row);
+                return NaN;
+              }
               return row['Longitude'];
             }),
             latitude: jsonData.map(row => {
-              if (typeof row['Latitude'] !== 'number') console.warn('Invalid Latitude in row:', row);
+              if (typeof row['Latitude'] !== 'number') {
+                console.warn('Invalid Latitude in row:', row);
+                return NaN;
+              }
               return row['Latitude'];
             }),
           },
           diversityIndices: {
             shannon: jsonData.map(row => {
-              if (typeof row['Shannon diversity index'] !== 'number') 
+              if (typeof row['Shannon diversity index'] !== 'number') {
                 console.warn('Invalid Shannon index in row:', row);
+                return NaN;
+              }
               return row['Shannon diversity index'];
             }),
             simpson: jsonData.map(row => {
-              if (typeof row["Simpson's index"] !== 'number') 
+              if (typeof row["Simpson's index"] !== 'number') {
                 console.warn('Invalid Simpson index in row:', row);
+                return NaN;
+              }
               return row["Simpson's index"];
             }),
             inverseSimpson: jsonData.map(row => {
-              if (typeof row["Inverse Simpson's index"] !== 'number') 
+              if (typeof row["Inverse Simpson's index"] !== 'number') {
                 console.warn('Invalid Inverse Simpson index in row:', row);
+                return NaN;
+              }
               return row["Inverse Simpson's index"];
             }),
             bergerParker: jsonData.map(row => {
-              if (typeof row['Berger Parker index'] !== 'number') 
+              if (typeof row['Berger Parker index'] !== 'number') {
                 console.warn('Invalid Berger-Parker index in row:', row);
+                return NaN;
+              }
               return row['Berger Parker index'];
             }),
             effectiveSpecies: jsonData.map(row => {
-              if (typeof row['Effective number of species'] !== 'number') 
+              if (typeof row['Effective number of species'] !== 'number') {
                 console.warn('Invalid Effective species in row:', row);
+                return NaN;
+              }
               return row['Effective number of species'];
             }),
             fishersAlpha: jsonData.map(row => {
-              if (typeof row["Fisher's alpha"] !== 'number') 
+              if (typeof row["Fisher's alpha"] !== 'number') {
                 console.warn("Invalid Fisher's alpha in row:", row);
+                return NaN;
+              }
               return row["Fisher's alpha"];
             }),
             pielouEvenness: jsonData.map(row => {
-              if (typeof row["Pielou's evenness"] !== 'number') 
+              if (typeof row["Pielou's evenness"] !== 'number') {
                 console.warn("Invalid Pielou's evenness in row:", row);
+                return NaN;
+              }
               return row["Pielou's evenness"];
             }),
             richness: jsonData.map(row => {
-              if (typeof row['Richness'] !== 'number') console.warn('Invalid Richness in row:', row);
+              if (typeof row['Richness'] !== 'number') {
+                console.warn('Invalid Richness in row:', row);
+                return NaN;
+              }
               return row['Richness'];
             }),
           },

@@ -115,7 +115,7 @@ export function CustomSelect({ value, onChange, options }: Props) {
             <button
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full h-[88px] px-4 py-2 text-left bg-white dark:bg-gray-800 border rounded-lg shadow-sm focus:outline-none transition-colors ${isOpen
+                className={`w-full h-16 px-3 text-left bg-white dark:bg-gray-800 border rounded-lg shadow-sm focus:outline-none transition-colors ${isOpen
                         ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 dark:ring-blue-400/20'
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                     }`}
@@ -124,9 +124,6 @@ export function CustomSelect({ value, onChange, options }: Props) {
                     <div className="flex flex-col justify-center">
                         <div className="font-medium text-gray-900 dark:text-white">
                             {selectedOption?.label || 'Select a variable'}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            {selectedOption?.description || 'Choose from the list'}
                         </div>
                     </div>
                     <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'transform rotate-180' : ''}`} />

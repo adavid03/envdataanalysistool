@@ -247,10 +247,8 @@ function calculateConfidence(columnName: string, patterns: RegExp[]): number {
         }
     });
 
-    // Instead of dividing by total patterns, use a more reasonable scale
-    // A single match should give at least 0.5 confidence
-    // Multiple matches can increase it up to 1.0
-    return Math.min(0.5 + (matches * 0.1), 1.0);
+    // Start at 0.0 and increase based on matches
+    return Math.min(matches * 0.2, 1.0);
 }
 
 export function autoDetectColumns(data: ProcessedData): DetectionResult {

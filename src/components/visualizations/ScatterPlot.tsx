@@ -110,14 +110,25 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
         const xData = getDataByVariable(data, xVariable);
         const yData = getDataByVariable(data, yVariable);
         
-        const minX = Math.min(...xData);
-        const maxX = Math.max(...xData);
-        const minY = Math.min(...yData);
-        const maxY = Math.max(...yData);
+        // Filter out non-finite values
+        const cleanX = xData.filter(Number.isFinite);
+        const cleanY = yData.filter(Number.isFinite);
         
-        // Add 5% padding to the domains
-        const xPadding = (maxX - minX) * 0.05;
-        const yPadding = (maxY - minY) * 0.05;
+        if (cleanX.length === 0 || cleanY.length === 0) {
+            return {
+                xDomain: [0, 1],
+                yDomain: [0, 1]
+            };
+        }
+        
+        const minX = Math.min(...cleanX);
+        const maxX = Math.max(...cleanX);
+        const minY = Math.min(...cleanY);
+        const maxY = Math.max(...cleanY);
+        
+        // Add 5% padding to the domains, with a minimum padding to handle equal values
+        const xPadding = Math.max((maxX - minX) * 0.05, 1e-9);
+        const yPadding = Math.max((maxY - minY) * 0.05, 1e-9);
         
         return {
             xDomain: [minX - xPadding, maxX + xPadding],
@@ -132,22 +143,34 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
         const xData = getDataByVariable(data, xVariable);
         const yData = getDataByVariable(data, yVariable);
         
-        // Calculate correlation coefficient and line of best fit
-        const n = xData.length;
-        const sumX = xData.reduce((a, b) => a + b, 0);
-        const sumY = yData.reduce((a, b) => a + b, 0);
-        const sumXY = xData.reduce((sum, x, i) => sum + x * yData[i], 0);
-        const sumX2 = xData.reduce((sum, x) => sum + x * x, 0);
+        // Filter out non-finite values
+        const clean = xData.map((x, i) => [x, yData[i]])
+            .filter(([a, b]) => Number.isFinite(a) && Number.isFinite(b));
         
-        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        if (clean.length < 2) return null;
+        
+        const xClean = clean.map(([a]) => a);
+        const yClean = clean.map(([, b]) => b);
+        
+        // Calculate correlation coefficient and line of best fit
+        const n = xClean.length;
+        const sumX = xClean.reduce((a, b) => a + b, 0);
+        const sumY = yClean.reduce((a, b) => a + b, 0);
+        const sumXY = xClean.reduce((sum, x, i) => sum + x * yClean[i], 0);
+        const sumX2 = xClean.reduce((sum, x) => sum + x * x, 0);
+        
+        const denominator = n * sumX2 - sumX * sumX;
+        if (denominator <= 0) return null;
+        
+        const slope = (n * sumXY - sumX * sumY) / denominator;
         const intercept = (sumY - slope * sumX) / n;
         
         return {
             slope,
             intercept,
             correlation: (n * sumXY - sumX * sumY) / 
-                        Math.sqrt((n * sumX2 - sumX * sumX) * 
-                                (n * yData.reduce((sum, y) => sum + y * y, 0) - sumY * sumY))
+                        Math.sqrt(denominator * 
+                                (n * yClean.reduce((sum, y) => sum + y * y, 0) - sumY * sumY))
         };
     }, [data, xVariable, yVariable, showCorrelationLine]);
 
