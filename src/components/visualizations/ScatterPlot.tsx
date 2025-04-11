@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { ProcessedData } from '@/utils/dataProcessing';
 import { getDataByVariable } from '@/utils/dataAccess';
 import { useTheme } from 'next-themes';
+import { calculateCorrelation } from '@/utils/statistics';
 import {
     ScatterChart,
     Scatter,
@@ -152,7 +153,10 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
         const xClean = clean.map(([a]) => a);
         const yClean = clean.map(([, b]) => b);
         
-        // Calculate correlation coefficient and line of best fit
+        // Calculate correlation using the shared function
+        const correlation = calculateCorrelation(xClean, yClean);
+        
+        // Calculate line of best fit
         const n = xClean.length;
         const sumX = xClean.reduce((a, b) => a + b, 0);
         const sumY = yClean.reduce((a, b) => a + b, 0);
@@ -168,9 +172,7 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
         return {
             slope,
             intercept,
-            correlation: (n * sumXY - sumX * sumY) / 
-                        Math.sqrt(denominator * 
-                                (n * yClean.reduce((sum, y) => sum + y * y, 0) - sumY * sumY))
+            correlation
         };
     }, [data, xVariable, yVariable, showCorrelationLine]);
 
