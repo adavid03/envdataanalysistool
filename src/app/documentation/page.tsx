@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 'use client';
 
 import { ChartBarIcon, MenuIcon, ChevronLeftIcon } from 'lucide-react';
