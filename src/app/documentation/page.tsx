@@ -1,6 +1,6 @@
 'use client';
 
-import { FileSpreadsheetIcon, ChartBarIcon, MenuIcon, ChevronLeftIcon } from 'lucide-react';
+import { ChartBarIcon, MenuIcon, ChevronLeftIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -187,23 +187,23 @@ const sections: Section[] = [
                                     <tr>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Radioactivity above background</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Text</td>
-                                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">"Yes" or "No"</td>
+                                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">&quot;Yes&quot; or &quot;No&quot;</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No</td>
                                     </tr>
                                     <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Shannon diversity index</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Shannon&apos;s diversity index</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Number</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Species diversity measure</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No</td>
                                     </tr>
                                     <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Simpson's index</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Simpson&apos;s index</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Number</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Species diversity measure</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No</td>
                                     </tr>
                                     <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Inverse Simpson's index</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Inverse Simpson&apos;s index</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Number</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Species diversity measure</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No</td>
@@ -221,13 +221,13 @@ const sections: Section[] = [
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No</td>
                                     </tr>
                                     <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Fisher's alpha</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Fisher&apos;s alpha</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Number</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Species diversity measure</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No</td>
                                     </tr>
                                     <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Pielou's evenness</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">Pielou&apos;s evenness</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Number</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Species diversity measure</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No</td>
@@ -274,7 +274,7 @@ const sections: Section[] = [
                         <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                             <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Important Notes:</h4>
                             <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                                <li>• Column names are case-insensitive (e.g., "pH" or "ph" both work)</li>
+                                <li>• Column names are case-insensitive (e.g., &quot;pH&quot; or &quot;ph&quot; both work)</li>
                                 <li>• All numeric values should be in decimal format</li>
                                 <li>• Missing values should be left blank (not filled with zeros or text)</li>
                                 <li>• Sample codes must be unique</li>
