@@ -75,7 +75,8 @@ function regularizedIncompleteBeta(x: number, a: number, b: number): number {
   // Continued fraction for incomplete beta
   const maxIter = 200;
   const eps = 3e-7;
-  let am = 1, bm = 1, az = 1, qab = a + b, qap = a + 1, qam = a - 1;
+  let am = 1, bm = 1, az = 1;
+  const qab = a + b, qap = a + 1, qam = a - 1;
   let bz = 1 - qab * x / qap;
   if (Math.abs(bz) < 1e-30) bz = 1e-30;
   let em, tem, d, ap, bp, app, bpp, aold;
@@ -118,10 +119,6 @@ function logGamma(z: number): number {
     const t = z + g + 0.5;
     return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x) - Math.log(z + 1);
   }
-}
-
-function logBeta(a: number, b: number): number {
-  return logGamma(a) + logGamma(b) - logGamma(a + b);
 }
 
 export { calculateCorrelation };

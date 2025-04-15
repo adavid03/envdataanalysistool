@@ -13,7 +13,6 @@ import { useAnalysisMode } from '../contexts/AnalysisModeContext';
 import { autoDetectColumns, DetectedColumn } from '@/utils/autoDetect';
 import { AutoDetectionConfirmation } from '@/components/AutoDetectionConfirmation';
 import { AddPlotDropdown } from '@/components/ui/AddPlotDropdown';
-// @ts-ignore
 import html2canvas from 'html2canvas';
 import ReactModal from 'react-modal';
 
@@ -119,7 +118,8 @@ const VARIABLE_UNITS: Record<string, string> = {
 };
 
 // Utility to export data as CSV
-function exportCSV(filename: string, rows: any[]) {
+type CSVRow = Record<string, string | number | null | undefined>;
+function exportCSV(filename: string, rows: CSVRow[]) {
     if (!rows.length) return;
     const keys = Object.keys(rows[0]);
     const csv = [keys.join(',')].concat(
@@ -156,7 +156,10 @@ function filterDataByGroup(data: ProcessedData, groupField: string, groupValue: 
     }
     if (!indices.length) return data;
     // Helper to filter arrays by indices
-    const filterArr = (arr: any[]) => indices.map(i => arr[i]);
+    function filterArr<T>(arr: T[]): T[] {
+        return indices.map(i => arr[i]);
+    }
+    
     return {
         metadata: {
             sampleCodes: filterArr(data.metadata.sampleCodes),

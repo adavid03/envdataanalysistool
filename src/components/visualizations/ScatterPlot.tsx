@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ProcessedData } from '@/utils/dataProcessing';
 import { getDataByVariable } from '@/utils/dataAccess';
 import { useTheme } from 'next-themes';
@@ -336,13 +336,12 @@ function reasonLabel(reason: string) {
 
 export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
     const { data, xVariable, yVariable, xUnit, yUnit, removeOutliers = true, iqrMultiplier = 2.5 } = props;
-    // Prepare the data for the scatter plot
+    // All hooks must be at the top
     const plotData = useMemo(() => {
         const xData = getDataByVariable(data, xVariable);
         const yData = getDataByVariable(data, yVariable);
         return xData.map((x, index) => ({ x, y: yData[index], index }));
     }, [data, xVariable, yVariable]);
-    // Outlier detection (IQR method)
     const xOutliers = useMemo(() => getOutlierIndices(plotData.map(p => p.x), iqrMultiplier), [plotData, iqrMultiplier]);
     const yOutliers = useMemo(() => getOutlierIndices(plotData.map(p => p.y), iqrMultiplier), [plotData, iqrMultiplier]);
     const allOutlierIndices = useMemo(() => {
@@ -351,7 +350,6 @@ export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
         yOutliers.forEach(i => set.add(i));
         return set;
     }, [xOutliers, yOutliers]);
-    // Add reason (X, Y, or X+Y) for each outlier
     const outlierPoints = useMemo(() => {
         return plotData
             .map((p, i) => ({
@@ -363,9 +361,9 @@ export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
             }))
             .filter((_, i) => allOutlierIndices.has(i));
     }, [plotData, allOutlierIndices, xOutliers, yOutliers]);
-    // Determine axis labels with units
     const xLabel = xVariable + (xUnit !== undefined ? (xUnit ? ` (${xUnit})` : '') : (VARIABLE_UNITS[xVariable] ? ` (${VARIABLE_UNITS[xVariable]})` : ''));
     const yLabel = yVariable + (yUnit !== undefined ? (yUnit ? ` (${yUnit})` : '') : (VARIABLE_UNITS[yVariable] ? ` (${VARIABLE_UNITS[yVariable]})` : ''));
+    // Now do conditional returns
     if (!removeOutliers) return null;
     if (outlierPoints.length === 0) {
         return (
@@ -381,7 +379,7 @@ export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
             </div>
             <div className="mb-2 text-xs text-red-800 dark:text-red-200">
                 Outliers are detected using the <b>Interquartile Range (IQR)</b> method with a multiplier of <b>{iqrMultiplier}</b>. A value is considered an outlier if it is unusually high or low compared to the rest of the data.<br />
-                <span className="font-semibold">Reason:</span> <span className="inline-block ml-1">'X' = outlier in X axis, 'Y' = outlier in Y axis, 'X+Y' = outlier in both axes.</span>
+                <span className="font-semibold">Reason:</span> <span className="inline-block ml-1">&apos;X&apos; = outlier in X axis, &apos;Y&apos; = outlier in Y axis, &apos;X+Y&apos; = outlier in both axes.</span>
             </div>
             <div className="overflow-x-auto">
                 <table className="min-w-full text-xs border border-red-200 dark:border-red-700 bg-white dark:bg-red-950">
@@ -406,7 +404,7 @@ export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
                 </table>
             </div>
             <div className="mt-2 text-xs text-red-700 dark:text-red-300">
-                <span className="font-semibold">Note:</span> The IQR method defines outliers as values below Q1 - <b>{iqrMultiplier}</b>×IQR or above Q3 + <b>{iqrMultiplier}</b>×IQR, where Q1 and Q3 are the 25th and 75th percentiles.
+                <span className="font-semibold">Note:</span> The IQR method defines outliers as values below Q1 - <b>{iqrMultiplier}</b>&times;IQR or above Q3 + <b>{iqrMultiplier}</b>&times;IQR, where Q1 and Q3 are the 25th and 75th percentiles.
             </div>
         </div>
     );
