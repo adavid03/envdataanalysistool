@@ -336,7 +336,8 @@ function reasonLabel(reason: string) {
 
 export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
     const { data, xVariable, yVariable, xUnit, yUnit, removeOutliers = true, iqrMultiplier = 2.5 } = props;
-    // All hooks must be at the top
+    if (!removeOutliers) return null;
+    // All hooks must be below this line
     const plotData = useMemo(() => {
         const xData = getDataByVariable(data, xVariable);
         const yData = getDataByVariable(data, yVariable);
@@ -363,8 +364,6 @@ export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
     }, [plotData, allOutlierIndices, xOutliers, yOutliers]);
     const xLabel = xVariable + (xUnit !== undefined ? (xUnit ? ` (${xUnit})` : '') : (VARIABLE_UNITS[xVariable] ? ` (${VARIABLE_UNITS[xVariable]})` : ''));
     const yLabel = yVariable + (yUnit !== undefined ? (yUnit ? ` (${yUnit})` : '') : (VARIABLE_UNITS[yVariable] ? ` (${VARIABLE_UNITS[yVariable]})` : ''));
-    // Now do conditional returns
-    if (!removeOutliers) return null;
     if (outlierPoints.length === 0) {
         return (
             <div className="mt-6 rounded-md border border-green-400 bg-green-50 dark:bg-green-900/20 p-3 text-sm text-green-800 dark:text-green-200">
