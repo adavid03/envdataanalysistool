@@ -2,7 +2,7 @@
 
 import { useFile } from '../contexts/FileContext';
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeftIcon, XIcon } from 'lucide-react';
+import { ChevronLeftIcon, XIcon, Settings2Icon, DownloadIcon } from 'lucide-react';
 import Link from 'next/link';
 import { ProcessedData, processExcelFile } from '@/utils/dataProcessing';
 import dynamic from 'next/dynamic';
@@ -13,10 +13,13 @@ import { useAnalysisMode } from '../contexts/AnalysisModeContext';
 import { autoDetectColumns, DetectedColumn } from '@/utils/autoDetect';
 import { AutoDetectionConfirmation } from '@/components/AutoDetectionConfirmation';
 import { AddPlotDropdown } from '@/components/ui/AddPlotDropdown';
+// @ts-ignore
+import html2canvas from 'html2canvas';
+import ReactModal from 'react-modal';
 
 // Dynamically import all Plotly components with no SSR
 const ScatterPlot = dynamic(
-    () => import('@/components/visualizations/ScatterPlot').then(mod => mod.ScatterPlot),
+    () => import('@/components/visualizations/ScatterPlot').then(mod => mod.default),
     { ssr: false }
 );
 
@@ -60,6 +63,7 @@ interface PlotConfig {
     warning?: string;
     correlation?: number;
     showCorrelationLine: boolean;
+    removeOutliers?: boolean;
 }
 
 interface SignificantRelationship {
@@ -84,6 +88,106 @@ const createVariableFromColumn = (column: DetectedColumn) => {
     };
 };
 
+// Add units mapping for axis labels
+const VARIABLE_UNITS: Record<string, string> = {
+    'Avg Temperature': '°C',
+    'temperature': '°C',
+    'Departure': '°C',
+    'pH': '',
+    'ph': '',
+    'Elevation': 'm',
+    'elevation': 'm',
+    'General hardness (calcium carbonate)': 'mg/L',
+    'hardness': 'mg/L',
+    'Total alkalinity ': 'mg/L',
+    'alkalinity': 'mg/L',
+    'Carbonate ': 'mg/L',
+    'carbonate': 'mg/L',
+    'Phosphate': 'mg/L',
+    'phosphate': 'mg/L',
+    'Nitrate  ': 'mg/L',
+    'nitrate': 'mg/L',
+    'Nitrite ': 'mg/L',
+    'nitrite': 'mg/L',
+    'Free chlorine': 'mg/L',
+    'chlorine': 'mg/L',
+    'Longitude': '°',
+    'longitude': '°',
+    'Latitude': '°',
+    'latitude': '°',
+    // Add more as needed
+};
+
+// Utility to export data as CSV
+function exportCSV(filename: string, rows: any[]) {
+    if (!rows.length) return;
+    const keys = Object.keys(rows[0]);
+    const csv = [keys.join(',')].concat(
+        rows.map(row => keys.map(k => JSON.stringify(row[k] ?? '')).join(','))
+    ).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Utility to get unique values for a metadata field
+function getUniqueValues(data: ProcessedData, field: string): string[] {
+    if (field === 'Sample Code') return Array.from(new Set(data.metadata.sampleCodes));
+    if (field === 'Date') return Array.from(new Set(data.metadata.dates));
+    // Add more fields as needed
+    return [];
+}
+
+// Utility to filter data by group
+function filterDataByGroup(data: ProcessedData, groupField: string, groupValue: string): ProcessedData {
+    // Only support Sample Code and Date for now
+    let indices: number[] = [];
+    if (groupField === 'Sample Code') {
+        indices = data.metadata.sampleCodes.map((v, i) => v === groupValue ? i : -1).filter(i => i !== -1);
+    } else if (groupField === 'Date') {
+        const datePairs = data.metadata.dates.map((v, i) => ({ v, i }));
+        const filtered = datePairs.filter(pair => excelSerialToDate(pair.v) === excelSerialToDate(groupValue));
+        filtered.sort((a, b) => Number(a.v) - Number(b.v));
+        indices = filtered.map(pair => pair.i);
+    }
+    if (!indices.length) return data;
+    // Helper to filter arrays by indices
+    const filterArr = (arr: any[]) => indices.map(i => arr[i]);
+    return {
+        metadata: {
+            sampleCodes: filterArr(data.metadata.sampleCodes),
+            dates: filterArr(data.metadata.dates),
+            locations: {
+                lat: filterArr(data.metadata.locations.lat),
+                long: filterArr(data.metadata.locations.long),
+            },
+        },
+        environmentalFactors: Object.fromEntries(
+            Object.entries(data.environmentalFactors).map(([k, arr]) => [k, filterArr(arr)])
+        ) as ProcessedData['environmentalFactors'],
+        diversityIndices: Object.fromEntries(
+            Object.entries(data.diversityIndices).map(([k, arr]) => [k, filterArr(arr)])
+        ) as ProcessedData['diversityIndices'],
+    };
+}
+
+const DEFAULT_IQR_MULTIPLIER = 3;
+
+// Add a helper to convert Excel serial date to YYYY-MM-DD
+function excelSerialToDate(serial: number | string): string {
+    if (typeof serial === 'string' && serial.trim() === '') return '(blank)';
+    const n = typeof serial === 'number' ? serial : Number(serial);
+    if (!isFinite(n) || n <= 0) return '(blank)';
+    // Excel's epoch starts at 1899-12-30
+    const date = new Date(Math.round((n - 25569) * 86400 * 1000));
+    // Format as YYYY-MM-DD
+    return date.toISOString().slice(0, 10);
+}
+
 export default function AnalysisPage() {
     const { file } = useFile();
     const [data, setData] = useState<ProcessedData | null>(null);
@@ -95,6 +199,11 @@ export default function AnalysisPage() {
     const [detectedColumns, setDetectedColumns] = useState<DetectedColumn[]>([]);
     const [showAutoSection, setShowAutoSection] = useState(false);
     const [autoPlots, setAutoPlots] = useState<PlotConfig[]>([]);
+    const [plotGroupFilters, setPlotGroupFilters] = useState<{ [plotId: string]: { groupField: string, groupValue: string } }>({});
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [iqrMultiplier, setIqrMultiplier] = useState(DEFAULT_IQR_MULTIPLIER);
+    const [downloadingChart, setDownloadingChart] = useState<{[plotId: string]: boolean}>({});
+    const [downloadingData, setDownloadingData] = useState<{[plotId: string]: boolean}>({});
 
     useEffect(() => {
         if (!file) {
@@ -189,7 +298,8 @@ export default function AnalysisPage() {
                     id: '1',
                     xVariable: envVars[0].value,
                     yVariable: divVars[0].value,
-                    showCorrelationLine: false
+                    showCorrelationLine: false,
+                    removeOutliers: true,
                 }]);
             }
         }
@@ -284,7 +394,8 @@ export default function AnalysisPage() {
             xVariable: rel.envVar.value,
             yVariable: rel.divVar.value,
             correlation: rel.correlation,
-            showCorrelationLine: false
+            showCorrelationLine: false,
+            removeOutliers: true,
         }));
 
         setAutoPlots(newAutoPlots);
@@ -354,8 +465,50 @@ export default function AnalysisPage() {
                     <h1 className="text-lg font-bold text-gray-900 dark:text-white">
                         Analysis
                     </h1>
+                    <button
+                        className="ml-auto p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={() => setSettingsOpen(true)}
+                        aria-label="Settings"
+                    >
+                        <Settings2Icon className="w-6 h-6" />
+                    </button>
                 </div>
             </div>
+            <ReactModal
+                isOpen={settingsOpen}
+                onRequestClose={() => setSettingsOpen(false)}
+                className="fixed inset-0 flex items-center justify-center z-50 outline-none"
+                overlayClassName="fixed inset-0 bg-black/40 z-40"
+                ariaHideApp={false}
+            >
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md relative">
+                    <button
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                        onClick={() => setSettingsOpen(false)}
+                        aria-label="Close"
+                    >
+                        <XIcon className="w-5 h-5" />
+                    </button>
+                    <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Settings</h2>
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Outlier Detection Threshold (IQR Multiplier)
+                        </label>
+                        <input
+                            type="number"
+                            min={1}
+                            max={5}
+                            step={0.1}
+                            value={iqrMultiplier}
+                            onChange={e => setIqrMultiplier(Number(e.target.value))}
+                            className="w-full border rounded px-2 py-1 text-sm"
+                        />
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Higher values remove fewer points as outliers. Default: 3
+                        </div>
+                    </div>
+                </div>
+            </ReactModal>
             <div className="container mx-auto max-w-7xl pt-28">
 
 
@@ -402,7 +555,8 @@ export default function AnalysisPage() {
                                                             id: String(prev.length + 1),
                                                             xVariable: '',
                                                             yVariable: '',
-                                                            showCorrelationLine: false
+                                                            showCorrelationLine: false,
+                                                            removeOutliers: true,
                                                         }]);
                                                     } else if (type === 'water' && availableEnv.length > 1) {
                                                         // Water Chemistry: env vs env
@@ -410,7 +564,8 @@ export default function AnalysisPage() {
                                                             id: String(prev.length + 1),
                                                             xVariable: availableEnv[0].value,
                                                             yVariable: availableEnv[1].value,
-                                                            showCorrelationLine: false
+                                                            showCorrelationLine: false,
+                                                            removeOutliers: true,
                                                         }]);
                                                     } else if (type === 'diversity' && availableEnv.length > 0 && availableDiv.length > 0) {
                                                         // Diversity: env vs diversity
@@ -418,15 +573,16 @@ export default function AnalysisPage() {
                                                             id: String(prev.length + 1),
                                                             xVariable: availableEnv[0].value,
                                                             yVariable: availableDiv[0].value,
-                                                            showCorrelationLine: false
+                                                            showCorrelationLine: false,
+                                                            removeOutliers: true,
                                                         }]);
                                                     }
                                                 }}
                                             />
                                             <button
                                                 className={`group relative h-10 px-4 backdrop-blur-sm border rounded-md text-sm transition-colors focus:outline-none focus:ring-2 ${showAutoSection
-                                                        ? "bg-red-100/20 dark:bg-red-900/20 border-red-200/50 dark:border-red-700/50 text-red-700 dark:text-red-400 hover:bg-red-100/30 dark:hover:bg-red-900/30 focus:ring-red-500/50"
-                                                        : "bg-green-100/20 dark:bg-green-900/20 border-green-200/50 dark:border-green-700/50 text-green-700 dark:text-green-400 hover:bg-green-100/30 dark:hover:bg-green-900/30 focus:ring-green-500/50"
+                                                    ? "bg-red-100/20 dark:bg-red-900/20 border-red-200/50 dark:border-red-700/50 text-red-700 dark:text-red-400 hover:bg-red-100/30 dark:hover:bg-red-900/30 focus:ring-red-500/50"
+                                                    : "bg-green-100/20 dark:bg-green-900/20 border-green-200/50 dark:border-green-700/50 text-green-700 dark:text-green-400 hover:bg-green-100/30 dark:hover:bg-green-900/30 focus:ring-green-500/50"
                                                     }`}
                                                 onClick={() => {
                                                     if (showAutoSection) {
@@ -449,77 +605,201 @@ export default function AnalysisPage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                    {plots.map((plot, index) => (
-                                        <div key={plot.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden pb-5">
-                                            <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 p-4">
-                                                <div className="flex justify-between items-center mb-4">
-                                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                                                        {plot.xVariable && plot.yVariable ? (
-                                                            `${allVariables.find(v => v.value === plot.xVariable)?.label || plot.xVariable} vs. ${allVariables.find(v => v.value === plot.yVariable)?.label || plot.yVariable}`
-                                                        ) : (
-                                                            `Plot ${index + 1}`
+                                    {plots.map((plot, index) => {
+                                        // Use parent state for group filter
+                                        const groupField = plotGroupFilters[plot.id]?.groupField || '';
+                                        const groupValue = plotGroupFilters[plot.id]?.groupValue || '';
+                                        const setGroupField = (val: string) => setPlotGroupFilters(prev => ({
+                                            ...prev,
+                                            [plot.id]: { ...prev[plot.id], groupField: val, groupValue: '' }
+                                        }));
+                                        const setGroupValue = (val: string) => setPlotGroupFilters(prev => ({
+                                            ...prev,
+                                            [plot.id]: { ...prev[plot.id], groupValue: val }
+                                        }));
+                                        // Available group fields
+                                        const groupFields = ['Sample Code', 'Date'];
+                                        // Only show group filter if a field is selected
+                                        const groupValues = groupField ? getUniqueValues(data, groupField) : [];
+                                        // Data to display (filtered if group selected)
+                                        const filteredData = groupField && groupValue ? filterDataByGroup(data, groupField, groupValue) : data;
+                                        // Download handlers
+                                        const handleDownloadChart = async () => {
+                                            setDownloadingChart(prev => ({ ...prev, [plot.id]: true }));
+                                            await new Promise(resolve => setTimeout(resolve, 0));
+                                            try {
+                                                const chartDiv = document.getElementById(`plot-chart-${plot.id}`);
+                                                if (!chartDiv) return;
+                                                const canvas = await html2canvas(chartDiv);
+                                                const url = canvas.toDataURL('image/png');
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = `plot-${plot.xVariable}-vs-${plot.yVariable}.png`;
+                                                a.click();
+                                            } finally {
+                                                setDownloadingChart(prev => ({ ...prev, [plot.id]: false }));
+                                            }
+                                        };
+                                        const handleDownloadData = () => {
+                                            setDownloadingData(prev => ({ ...prev, [plot.id]: true }));
+                                            setTimeout(() => {
+                                                try {
+                                                    const xArr = getDataByVariable(filteredData, plot.xVariable);
+                                                    const yArr = getDataByVariable(filteredData, plot.yVariable);
+                                                    const rows = xArr.map((x, i) => ({
+                                                        [plot.xVariable]: x,
+                                                        [plot.yVariable]: yArr[i],
+                                                        ...(filteredData.metadata.sampleCodes[i] && { 'Sample Code': filteredData.metadata.sampleCodes[i] })
+                                                    }));
+                                                    exportCSV(`data-${plot.xVariable}-vs-${plot.yVariable}.csv`, rows);
+                                                } finally {
+                                                    setTimeout(() => setDownloadingData(prev => ({ ...prev, [plot.id]: false })), 500);
+                                                }
+                                            }, 0);
+                                        };
+                                        return (
+                                            <div key={plot.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden pb-5">
+                                                <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 p-4">
+                                                    <div className="flex justify-between items-center mb-4">
+                                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                                            {plot.xVariable && plot.yVariable ? (
+                                                                `${allVariables.find(v => v.value === plot.xVariable)?.label || plot.xVariable} vs. ${allVariables.find(v => v.value === plot.yVariable)?.label || plot.yVariable}`
+                                                            ) : (
+                                                                `Plot ${index + 1}`
+                                                            )}
+                                                        </h3>
+                                                        {plots.length > 1 && (
+                                                            <button
+                                                                onClick={() => removePlot(plot.id)}
+                                                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                                            >
+                                                                <XIcon className="w-5 h-5" />
+                                                            </button>
                                                         )}
-                                                    </h3>
-                                                    {plots.length > 1 && (
-                                                        <button
-                                                            onClick={() => removePlot(plot.id)}
-                                                            className="text-gray-400 hover:text-red-500 transition-colors"
-                                                        >
-                                                            <XIcon className="w-5 h-5" />
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-4 z-10">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                            X-Axis Variable
-                                                        </label>
-                                                        <CustomSelect
-                                                            value={plot.xVariable}
-                                                            onChange={(value) => updatePlot(plot.id, { xVariable: value })}
-                                                            options={getOptionsWithDisabled(plot.id, true)}
-                                                        />
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                            Y-Axis Variable
-                                                        </label>
-                                                        <CustomSelect
-                                                            value={plot.yVariable}
-                                                            onChange={(value) => updatePlot(plot.id, { yVariable: value })}
-                                                            options={getOptionsWithDisabled(plot.id, false)}
-                                                        />
+                                                    {/* Controls Row: Group filter + Download buttons */}
+                                                    <div className="flex flex-wrap gap-3 items-center mb-4">
+                                                        <div className="flex gap-2 items-center">
+                                                            <select
+                                                                className="border rounded px-2 py-1 text-sm"
+                                                                value={groupField}
+                                                                onChange={e => { setGroupField(e.target.value); }}
+                                                            >
+                                                                <option value="">Filter by group...</option>
+                                                                {groupFields.map(f => <option key={f} value={f}>{f}</option>)}
+                                                            </select>
+                                                            {groupField && (
+                                                                <select
+                                                                    className="border rounded px-2 py-1 text-sm"
+                                                                    value={groupValue}
+                                                                    onChange={e => setGroupValue(e.target.value)}
+                                                                >
+                                                                    <option value="">Select {groupField}</option>
+                                                                    {groupField === 'Date'
+                                                                        ? [...groupValues].sort((a, b) => Number(a) - Number(b)).map((v, i) => (
+                                                                            <option key={`${v}-${i}`} value={v}>
+                                                                                {excelSerialToDate(v)}
+                                                                            </option>
+                                                                        ))
+                                                                        : groupValues.map((v, i) => (
+                                                                            <option key={`${v}-${i}`} value={v}>
+                                                                                {v || '(blank)'}
+                                                                            </option>
+                                                                        ))}
+                                                                </select>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex gap-2 ml-auto">
+                                                            <button
+                                                                onClick={handleDownloadChart}
+                                                                className={`px-3 py-1 bg-blue-600 text-white rounded text-xs flex items-center ${downloadingChart[plot.id] ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                                                disabled={downloadingChart[plot.id]}
+                                                            >
+                                                                {downloadingChart[plot.id] ? (
+                                                                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                                                ) : (
+                                                                    <DownloadIcon className="w-4 h-4 mr-2" />
+                                                                )}
+                                                                Chart
+                                                            </button>
+                                                            <button
+                                                                onClick={handleDownloadData}
+                                                                className={`px-3 py-1 bg-green-600 text-white rounded text-xs flex items-center ${downloadingData[plot.id] ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                                                disabled={downloadingData[plot.id]}
+                                                            >
+                                                                {downloadingData[plot.id] ? (
+                                                                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                                                ) : (
+                                                                    <DownloadIcon className="w-4 h-4 mr-2" />
+                                                                )}
+                                                                Data
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
-
-                                            {plot.xVariable && plot.yVariable && (
-                                                <div className="w-full" style={{ height: 300 }}>
-                                                    <div className="flex items-center gap-2 px-5 py-1">
-                                                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={plot.showCorrelationLine}
-                                                                onChange={(e) => updatePlot(plot.id, { showCorrelationLine: e.target.checked })}
-                                                                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                                    {/* Variable selectors row */}
+                                                    <div className="flex flex-col sm:flex-row gap-6 mb-2 w-full">
+                                                        <div className="flex flex-col min-w-[180px] w-full sm:w-1/2">
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                X-Axis Variable
+                                                            </label>
+                                                            <CustomSelect
+                                                                value={plot.xVariable}
+                                                                onChange={(value) => updatePlot(plot.id, { xVariable: value })}
+                                                                options={getOptionsWithDisabled(plot.id, true)}
                                                             />
-                                                            <span>Show Correlation Line</span>
-                                                        </label>
-                                                    </div>
-                                                    <div className="w-full h-[calc(100%-40px)] p-5">
-                                                        <ScatterPlot
-                                                            data={data}
-                                                            xVariable={plot.xVariable}
-                                                            yVariable={plot.yVariable}
-                                                            height={300}
-                                                            showCorrelationLine={plot.showCorrelationLine}
-                                                        />
+                                                        </div>
+                                                        <div className="flex flex-col min-w-[180px] w-full sm:w-1/2">
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                Y-Axis Variable
+                                                            </label>
+                                                            <CustomSelect
+                                                                value={plot.yVariable}
+                                                                onChange={(value) => updatePlot(plot.id, { yVariable: value })}
+                                                                options={getOptionsWithDisabled(plot.id, false)}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                                {plot.xVariable && plot.yVariable && (
+                                                    <div className="w-full h-auto flex flex-col">
+                                                        <div className="flex items-center gap-2 px-5 py-1">
+                                                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={plot.showCorrelationLine}
+                                                                    onChange={(e) => updatePlot(plot.id, { showCorrelationLine: e.target.checked })}
+                                                                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                                                />
+                                                                <span>Show Correlation Line</span>
+                                                            </label>
+                                                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer ml-4">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={plot.removeOutliers !== false}
+                                                                    onChange={e => updatePlot(plot.id, { removeOutliers: e.target.checked })}
+                                                                    className="rounded border-gray-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50"
+                                                                />
+                                                                <span>Remove Outliers</span>
+                                                            </label>
+                                                        </div>
+                                                        <div className="w-full h-auto p-5" id={`plot-chart-${plot.id}`}> {/* Chart container for html2canvas */}
+                                                            <ScatterPlot
+                                                                data={filteredData}
+                                                                xVariable={plot.xVariable}
+                                                                yVariable={plot.yVariable}
+                                                                height={300}
+                                                                showCorrelationLine={plot.showCorrelationLine}
+                                                                xUnit={VARIABLE_UNITS[plot.xVariable]}
+                                                                yUnit={VARIABLE_UNITS[plot.yVariable]}
+                                                                removeOutliers={plot.removeOutliers !== false}
+                                                                iqrMultiplier={iqrMultiplier}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
@@ -573,8 +853,8 @@ export default function AnalysisPage() {
                                                                 type="checkbox"
                                                                 checked={plot.showCorrelationLine}
                                                                 onChange={(e) => {
-                                                                    const newAutoPlots = autoPlots.map(p => 
-                                                                        p.id === plot.id 
+                                                                    const newAutoPlots = autoPlots.map(p =>
+                                                                        p.id === plot.id
                                                                             ? { ...p, showCorrelationLine: e.target.checked }
                                                                             : p
                                                                     );
@@ -592,6 +872,7 @@ export default function AnalysisPage() {
                                                             yVariable={plot.yVariable}
                                                             height={300}
                                                             showCorrelationLine={plot.showCorrelationLine}
+                                                            iqrMultiplier={iqrMultiplier}
                                                         />
                                                     </div>
                                                 </div>
