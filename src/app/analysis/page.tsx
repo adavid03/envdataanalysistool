@@ -207,6 +207,14 @@ export default function AnalysisPage() {
     const [iqrMultiplier, setIqrMultiplier] = useState(DEFAULT_IQR_MULTIPLIER);
     const [downloadingChart, setDownloadingChart] = useState<{[plotId: string]: boolean}>({});
     const [downloadingData, setDownloadingData] = useState<{[plotId: string]: boolean}>({});
+    // Track scroll position
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const onScroll = () => setScrolled(window.scrollY > 40);
+        window.addEventListener('scroll', onScroll);
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
 
     useEffect(() => {
         if (!file) {
@@ -225,6 +233,12 @@ export default function AnalysisPage() {
                     new Promise(resolve => setTimeout(resolve, 2000))
                 ]);
                 setData(processed);
+
+                // Dynamically set temperature unit in VARIABLE_UNITS
+                if (processed.detectedUnits && processed.detectedUnits.temperature) {
+                    VARIABLE_UNITS['Avg Temperature'] = processed.detectedUnits.temperature === 'F' ? '°F' : '°C';
+                    VARIABLE_UNITS['temperature'] = processed.detectedUnits.temperature === 'F' ? '°F' : '°C';
+                }
 
                 // Always run auto-detection first
                 const result = autoDetectColumns(processed);
@@ -302,7 +316,7 @@ export default function AnalysisPage() {
                     xVariable: envVars[0].value,
                     yVariable: divVars[0].value,
                     showCorrelationLine: false,
-                    removeOutliers: true,
+                    removeOutliers: false,
                 }]);
             }
         }
@@ -398,7 +412,7 @@ export default function AnalysisPage() {
             yVariable: rel.divVar.value,
             correlation: rel.correlation,
             showCorrelationLine: false,
-            removeOutliers: true,
+            removeOutliers: false,
         }));
 
         setAutoPlots(newAutoPlots);
@@ -457,8 +471,8 @@ export default function AnalysisPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="fixed top-2 max-w-[88rem] w-full z-20 -translate-x-1/2 left-1/2">
-                <div className="flex items-center gap-5 bg-neutral-100/50 dark:bg-neutral-900/50 border border-gray-200 dark:border-gray-800 p-2 rounded-lg backdrop-blur-sm">
+            <div className="fixed top-2 max-w-[88rem] w-full z-20 -translate-x-1/2 left-1/2 px-2 sm:px-6">
+                <div className="flex items-center gap-5 flex-wrap bg-neutral-100/50 dark:bg-neutral-900/50 border border-gray-200 dark:border-gray-800 p-2 rounded-lg backdrop-blur-sm">
                     <Link
                         href="/"
                         className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
@@ -468,13 +482,83 @@ export default function AnalysisPage() {
                     <h1 className="text-lg font-bold text-gray-900 dark:text-white">
                         Analysis
                     </h1>
-                    <button
-                        className="ml-auto p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                        onClick={() => setSettingsOpen(true)}
-                        aria-label="Settings"
-                    >
-                        <Settings2Icon className="w-6 h-6" />
-                    </button>
+                    {/* Top bar Add Plot and AC buttons (show when scrolled) */}
+                    <div className="ml-auto flex items-center gap-2">
+                        <div className={`transition-all duration-300 ${scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
+                            style={{ minWidth: 180 }}>
+                            <div className="flex items-center gap-2">
+                                <AddPlotDropdown
+                                    onSelect={(type) => {
+                                        // Get currently used variables
+                                        const usedVars = new Set(plots.flatMap(p => [p.xVariable, p.yVariable]));
+
+                                        // Filter variables based on type and usage
+                                        const availableEnv = allVariables
+                                            .filter(v => v.group === 'Environmental Factors' && !usedVars.has(v.value));
+                                        const availableDiv = allVariables
+                                            .filter(v => v.group === 'Diversity Indices' && !usedVars.has(v.value));
+
+                                        // Add new plot based on type
+                                        if (type === 'custom') {
+                                            setPlots(prev => [...prev, {
+                                                id: String(prev.length + 1),
+                                                xVariable: '',
+                                                yVariable: '',
+                                                showCorrelationLine: false,
+                                                removeOutliers: false,
+                                            }]);
+                                        } else if (type === 'water' && availableEnv.length > 1) {
+                                            // Water Chemistry: env vs env
+                                            setPlots(prev => [...prev, {
+                                                id: String(prev.length + 1),
+                                                xVariable: availableEnv[0].value,
+                                                yVariable: availableEnv[1].value,
+                                                showCorrelationLine: false,
+                                                removeOutliers: false,
+                                            }]);
+                                        } else if (type === 'diversity' && availableEnv.length > 0 && availableDiv.length > 0) {
+                                            // Diversity: env vs diversity
+                                            setPlots(prev => [...prev, {
+                                                id: String(prev.length + 1),
+                                                xVariable: availableEnv[0].value,
+                                                yVariable: availableDiv[0].value,
+                                                showCorrelationLine: false,
+                                                removeOutliers: false,
+                                            }]);
+                                        }
+                                    }}
+                                />
+                                <button
+                                    className={`group relative h-10 px-4 backdrop-blur-sm border rounded-md text-sm transition-colors focus:outline-none focus:ring-2 ${showAutoSection
+                                        ? "bg-red-100/20 dark:bg-red-900/20 border-red-200/50 dark:border-red-700/50 text-red-700 dark:text-red-400 hover:bg-red-100/30 dark:hover:bg-red-900/30 focus:ring-red-500/50"
+                                        : "bg-green-100/20 dark:bg-green-900/20 border-green-200/50 dark:border-green-700/50 text-green-700 dark:text-green-400 hover:bg-green-100/30 dark:hover:bg-green-900/30 focus:ring-green-500/50"
+                                    }`}
+                                    onClick={() => {
+                                        if (showAutoSection) {
+                                            setShowAutoSection(false);
+                                        } else {
+                                            generateAutoPlots();
+                                        }
+                                    }}
+                                >
+                                    <span className="relative">
+                                        {showAutoSection ? 'Hide AC' : 'AC'}
+                                        <div className="absolute right-0 top-0 -translate-y-[calc(100%+0.75rem)] px-3 py-2 bg-gray-900 dark:bg-gray-200 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                            Auto Correlation: Find and display the strongest correlations between variables
+                                            <div className="absolute right-3 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+                                        </div>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                            onClick={() => setSettingsOpen(true)}
+                            aria-label="Settings"
+                        >
+                            <Settings2Icon className="w-6 h-6" />
+                        </button>
+                    </div>
                 </div>
             </div>
             <ReactModal
@@ -541,68 +625,73 @@ export default function AnalysisPage() {
                                     </h2>
                                     <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-2">
-                                            <AddPlotDropdown
-                                                onSelect={(type) => {
-                                                    // Get currently used variables
-                                                    const usedVars = new Set(plots.flatMap(p => [p.xVariable, p.yVariable]));
+                                            <div className={`transition-all duration-300 ${scrolled ? 'opacity-0 -translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'}`}
+                                                style={{ minWidth: 180 }}>
+                                                <div className="flex items-center gap-2">
+                                                    <AddPlotDropdown
+                                                        onSelect={(type) => {
+                                                            // Get currently used variables
+                                                            const usedVars = new Set(plots.flatMap(p => [p.xVariable, p.yVariable]));
 
-                                                    // Filter variables based on type and usage
-                                                    const availableEnv = allVariables
-                                                        .filter(v => v.group === 'Environmental Factors' && !usedVars.has(v.value));
-                                                    const availableDiv = allVariables
-                                                        .filter(v => v.group === 'Diversity Indices' && !usedVars.has(v.value));
+                                                            // Filter variables based on type and usage
+                                                            const availableEnv = allVariables
+                                                                .filter(v => v.group === 'Environmental Factors' && !usedVars.has(v.value));
+                                                            const availableDiv = allVariables
+                                                                .filter(v => v.group === 'Diversity Indices' && !usedVars.has(v.value));
 
-                                                    // Add new plot based on type
-                                                    if (type === 'custom') {
-                                                        setPlots(prev => [...prev, {
-                                                            id: String(prev.length + 1),
-                                                            xVariable: '',
-                                                            yVariable: '',
-                                                            showCorrelationLine: false,
-                                                            removeOutliers: true,
-                                                        }]);
-                                                    } else if (type === 'water' && availableEnv.length > 1) {
-                                                        // Water Chemistry: env vs env
-                                                        setPlots(prev => [...prev, {
-                                                            id: String(prev.length + 1),
-                                                            xVariable: availableEnv[0].value,
-                                                            yVariable: availableEnv[1].value,
-                                                            showCorrelationLine: false,
-                                                            removeOutliers: true,
-                                                        }]);
-                                                    } else if (type === 'diversity' && availableEnv.length > 0 && availableDiv.length > 0) {
-                                                        // Diversity: env vs diversity
-                                                        setPlots(prev => [...prev, {
-                                                            id: String(prev.length + 1),
-                                                            xVariable: availableEnv[0].value,
-                                                            yVariable: availableDiv[0].value,
-                                                            showCorrelationLine: false,
-                                                            removeOutliers: true,
-                                                        }]);
-                                                    }
-                                                }}
-                                            />
-                                            <button
-                                                className={`group relative h-10 px-4 backdrop-blur-sm border rounded-md text-sm transition-colors focus:outline-none focus:ring-2 ${showAutoSection
-                                                    ? "bg-red-100/20 dark:bg-red-900/20 border-red-200/50 dark:border-red-700/50 text-red-700 dark:text-red-400 hover:bg-red-100/30 dark:hover:bg-red-900/30 focus:ring-red-500/50"
-                                                    : "bg-green-100/20 dark:bg-green-900/20 border-green-200/50 dark:border-green-700/50 text-green-700 dark:text-green-400 hover:bg-green-100/30 dark:hover:bg-green-900/30 focus:ring-green-500/50"
-                                                    }`}
-                                                onClick={() => {
-                                                    if (showAutoSection) {
-                                                        setShowAutoSection(false);
-                                                    } else {
-                                                        generateAutoPlots();
-                                                    }
-                                                }}
-                                            >
-                                                <span className="relative">
-                                                    {showAutoSection ? 'Hide AC' : 'AC'}
-                                                    <div className="absolute right-0 top-0 -translate-y-[calc(100%+0.75rem)] px-3 py-2 bg-gray-900 dark:bg-gray-200 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                                        Auto Correlation: Find and display the strongest correlations between variables
-                                                        <div className="absolute right-3 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
-                                                    </div>
-                                                </span>
-                                            </button>
+                                                            // Add new plot based on type
+                                                            if (type === 'custom') {
+                                                                setPlots(prev => [...prev, {
+                                                                    id: String(prev.length + 1),
+                                                                    xVariable: '',
+                                                                    yVariable: '',
+                                                                    showCorrelationLine: false,
+                                                                    removeOutliers: false,
+                                                                }]);
+                                                            } else if (type === 'water' && availableEnv.length > 1) {
+                                                                // Water Chemistry: env vs env
+                                                                setPlots(prev => [...prev, {
+                                                                    id: String(prev.length + 1),
+                                                                    xVariable: availableEnv[0].value,
+                                                                    yVariable: availableEnv[1].value,
+                                                                    showCorrelationLine: false,
+                                                                    removeOutliers: false,
+                                                                }]);
+                                                            } else if (type === 'diversity' && availableEnv.length > 0 && availableDiv.length > 0) {
+                                                                // Diversity: env vs diversity
+                                                                setPlots(prev => [...prev, {
+                                                                    id: String(prev.length + 1),
+                                                                    xVariable: availableEnv[0].value,
+                                                                    yVariable: availableDiv[0].value,
+                                                                    showCorrelationLine: false,
+                                                                    removeOutliers: false,
+                                                                }]);
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        className={`group relative h-10 px-4 backdrop-blur-sm border rounded-md text-sm transition-colors focus:outline-none focus:ring-2 ${showAutoSection
+                                                            ? "bg-red-100/20 dark:bg-red-900/20 border-red-200/50 dark:border-red-700/50 text-red-700 dark:text-red-400 hover:bg-red-100/30 dark:hover:bg-red-900/30 focus:ring-red-500/50"
+                                                            : "bg-green-100/20 dark:bg-green-900/20 border-green-200/50 dark:border-green-700/50 text-green-700 dark:text-green-400 hover:bg-green-100/30 dark:hover:bg-green-900/30 focus:ring-green-500/50"
+                                                        }`}
+                                                        onClick={() => {
+                                                            if (showAutoSection) {
+                                                                setShowAutoSection(false);
+                                                            } else {
+                                                                generateAutoPlots();
+                                                            }
+                                                        }}
+                                                    >
+                                                        <span className="relative">
+                                                            {showAutoSection ? 'Hide AC' : 'AC'}
+                                                            <div className="absolute right-0 top-0 -translate-y-[calc(100%+0.75rem)] px-3 py-2 bg-gray-900 dark:bg-gray-200 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                                                Auto Correlation: Find and display the strongest correlations between variables
+                                                                <div className="absolute right-3 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+                                                            </div>
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -662,8 +751,8 @@ export default function AnalysisPage() {
                                         };
                                         return (
                                             <div key={plot.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden pb-5">
-                                                <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 p-4">
-                                                    <div className="flex justify-between items-center mb-4">
+                                                <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 p-2 sm:p-4">
+                                                    <div className="flex justify-between items-center mb-4 flex-wrap gap-y-2">
                                                         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                                                             {plot.xVariable && plot.yVariable ? (
                                                                 `${allVariables.find(v => v.value === plot.xVariable)?.label || plot.xVariable} vs. ${allVariables.find(v => v.value === plot.yVariable)?.label || plot.yVariable}`
@@ -681,10 +770,10 @@ export default function AnalysisPage() {
                                                         )}
                                                     </div>
                                                     {/* Controls Row: Group filter + Download buttons */}
-                                                    <div className="flex flex-wrap gap-3 items-center mb-4">
+                                                    <div className="flex flex-wrap gap-3 items-center mb-4 gap-y-2">
                                                         <div className="flex gap-2 items-center">
                                                             <select
-                                                                className="border rounded px-2 py-1 text-sm"
+                                                                className="border rounded px-2 py-1 text-sm w-full sm:w-auto"
                                                                 value={groupField}
                                                                 onChange={e => { setGroupField(e.target.value); }}
                                                             >
@@ -693,7 +782,7 @@ export default function AnalysisPage() {
                                                             </select>
                                                             {groupField && (
                                                                 <select
-                                                                    className="border rounded px-2 py-1 text-sm"
+                                                                    className="border rounded px-2 py-1 text-sm w-full sm:w-auto"
                                                                     value={groupValue}
                                                                     onChange={e => setGroupValue(e.target.value)}
                                                                 >
@@ -820,7 +909,7 @@ export default function AnalysisPage() {
                                     <div className="grid grid-cols-3 gap-4">
                                         {autoPlots.map((plot) => (
                                             <div key={plot.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-                                                <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 p-3">
+                                                <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 p-2 sm:p-3">
                                                     <div className="flex flex-col gap-2">
                                                         <div className="flex justify-between items-start">
                                                             <h3 className="text-sm font-medium text-gray-900 dark:text-white pr-6">

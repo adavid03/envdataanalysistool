@@ -67,6 +67,18 @@ export interface ProcessedData {
     pielouEvenness: number[];
     richness: number[];
   };
+  detectedUnits?: { temperature: 'C' | 'F' };
+}
+
+// Helper to detect temperature unit
+function detectTemperatureUnit(temps: number[]): 'C' | 'F' {
+  const validTemps = temps.filter(t => typeof t === 'number' && isFinite(t));
+  if (validTemps.length === 0) return 'C'; // fallback
+  const min = Math.min(...validTemps);
+  const max = Math.max(...validTemps);
+  if (min > 45) return 'F';
+  if (max < 45) return 'C';
+  return 'F'; // default to F if ambiguous
 }
 
 export async function processExcelFile(file: File): Promise<ProcessedData> {
@@ -273,6 +285,10 @@ export async function processExcelFile(file: File): Promise<ProcessedData> {
             }),
           },
         };
+        
+        const temps = processed.environmentalFactors.temperature;
+        const detectedTempUnit = detectTemperatureUnit(temps);
+        processed.detectedUnits = { temperature: detectedTempUnit };
         
         resolve(processed);
       } catch (error) {

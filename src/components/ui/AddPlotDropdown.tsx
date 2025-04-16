@@ -62,9 +62,12 @@ export function AddPlotDropdown({ onSelect }: AddPlotDropdownProps) {
             <button
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
-                className="h-10 min-w-[280px] bg-white/10 dark:bg-gray-900/10 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 text-gray-900 dark:text-white rounded-lg px-4 text-sm hover:bg-white/20 dark:hover:bg-gray-900/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_-3px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_6px_20px_-3px_rgba(0,0,0,0.3)] flex items-center justify-between"
+                className="h-9 min-w-[220px] sm:min-w-[220px] w-full sm:w-auto bg-blue-100 hover:bg-blue-200 text-blue-800 font-normal rounded-md px-4 text-sm shadow flex items-center justify-between transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-300/40"
             >
-                <span>Add a new plot...</span>
+                <span className="flex items-center gap-2">
+                    <PlusIcon className="w-4 h-4 mr-1" />
+                    Add a new plot
+                </span>
                 <ChevronDownIcon className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -76,7 +79,8 @@ export function AddPlotDropdown({ onSelect }: AddPlotDropdownProps) {
                             position: 'absolute',
                             top: `${dropdownPosition.top}px`,
                             left: `${dropdownPosition.left}px`,
-                            width: `${dropdownPosition.width}px`,
+                            width: dropdownPosition.width < 220 ? (window.innerWidth < 640 ? '100vw' : '220px') : `${dropdownPosition.width}px`,
+                            maxWidth: window.innerWidth < 640 ? '100vw' : undefined,
                             zIndex: 50
                         }}
                         className="mt-1 py-1 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-lg shadow-lg overflow-hidden"
