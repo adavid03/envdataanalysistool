@@ -192,17 +192,6 @@ export const ScatterPlotChart: React.FC<ScatterPlotProps & { onCorrelation?: (va
     const xIsDate = useMemo(() => isDateVariable(xVariable, xDataRaw), [xVariable, xDataRaw]);
     const yIsDate = useMemo(() => isDateVariable(yVariable, yDataRaw), [yVariable, yDataRaw]);
 
-    // Defensive: check for all-NaN or missing data (use filtered data)
-    const allXInvalid = !filteredPlotData.some(p => typeof p.x === 'number' && isFinite(p.x));
-    const allYInvalid = !filteredPlotData.some(p => typeof p.y === 'number' && isFinite(p.y));
-    if (allXInvalid || allYInvalid) {
-        return (
-            <div className="flex items-center justify-center h-full min-h-[200px] text-red-600 dark:text-red-400 text-center">
-                No valid data to plot for the selected variables.
-            </div>
-        );
-    }
-
     // Calculate initial domains with padding
     const { xDomain, yDomain } = useMemo(() => {
         const xData = filteredPlotData.map(p => p.x);
@@ -226,6 +215,17 @@ export const ScatterPlotChart: React.FC<ScatterPlotProps & { onCorrelation?: (va
             yDomain: [minY - yPadding, maxY + yPadding]
         };
     }, [filteredPlotData]);
+
+    // Defensive: check for all-NaN or missing data (use filtered data)
+    const allXInvalid = !filteredPlotData.some(p => typeof p.x === 'number' && isFinite(p.x));
+    const allYInvalid = !filteredPlotData.some(p => typeof p.y === 'number' && isFinite(p.y));
+    if (allXInvalid || allYInvalid) {
+        return (
+            <div className="flex items-center justify-center h-full min-h-[200px] text-red-600 dark:text-red-400 text-center">
+                No valid data to plot for the selected variables.
+            </div>
+        );
+    }
 
     // Calculate correlation line and value if needed
     const correlationLine = useMemo(() => {
