@@ -12,6 +12,7 @@ const calculateCorrelation = (x: number[], y: number[]): number => {
   if (clean.length === 0) return 0;
   
   const n = clean.length;
+  if (n < 2) return NaN;
   const xClean = clean.map(([a]) => a);
   const yClean = clean.map(([, b]) => b);
 
@@ -70,6 +71,7 @@ function regularizedIncompleteBeta(x: number, a: number, b: number): number {
   // Special cases
   if (x === 0) return 0;
   if (x === 1) return 1;
+  if (x > (a + 1) / (a + b + 2)) return 1 - regularizedIncompleteBeta(1 - x, b, a);
   // Compute ln(Beta(a, b))
   const lnBeta = logGamma(a) + logGamma(b) - logGamma(a + b);
   // Continued fraction for incomplete beta
@@ -117,7 +119,7 @@ function logGamma(z: number): number {
       x += p[i] / (z + i);
     }
     const t = z + g + 0.5;
-    return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x) - Math.log(z + 1);
+    return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
   }
 }
 

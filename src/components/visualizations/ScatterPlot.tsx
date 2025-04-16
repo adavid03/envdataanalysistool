@@ -186,6 +186,11 @@ export const ScatterPlotChart: React.FC<ScatterPlotProps & { onCorrelation?: (va
         return plotData.filter((_, i) => !allOutlierIndices.has(i));
     }, [plotData, allOutlierIndices, removeOutliers]);
 
+    // Defensive: check for all-NaN or missing data (use filtered data)
+    const allXInvalid = !filteredPlotData.some(p => typeof p.x === 'number' && isFinite(p.x));
+    const allYInvalid = !filteredPlotData.some(p => typeof p.y === 'number' && isFinite(p.y));
+    const renderChart = !(allXInvalid || allYInvalid);
+
     // For date formatting
     const xDataRaw = useMemo(() => getDataByVariable(data, xVariable), [data, xVariable]);
     const yDataRaw = useMemo(() => getDataByVariable(data, yVariable), [data, yVariable]);
@@ -216,17 +221,6 @@ export const ScatterPlotChart: React.FC<ScatterPlotProps & { onCorrelation?: (va
         };
     }, [filteredPlotData]);
 
-    // Defensive: check for all-NaN or missing data (use filtered data)
-    const allXInvalid = !filteredPlotData.some(p => typeof p.x === 'number' && isFinite(p.x));
-    const allYInvalid = !filteredPlotData.some(p => typeof p.y === 'number' && isFinite(p.y));
-    if (allXInvalid || allYInvalid) {
-        return (
-            <div className="flex items-center justify-center h-full min-h-[200px] text-red-600 dark:text-red-400 text-center">
-                No valid data to plot for the selected variables.
-            </div>
-        );
-    }
-
     // Calculate correlation line and value if needed
     const correlationLine = useMemo(() => {
         if (!showCorrelationLine) return null;
@@ -254,7 +248,7 @@ export const ScatterPlotChart: React.FC<ScatterPlotProps & { onCorrelation?: (va
     const xLabel = xVariable + (xUnit !== undefined ? (xUnit ? ` (${xUnit})` : '') : (VARIABLE_UNITS[xVariable] ? ` (${VARIABLE_UNITS[xVariable]})` : ''));
     const yLabel = yVariable + (yUnit !== undefined ? (yUnit ? ` (${yUnit})` : '') : (VARIABLE_UNITS[yVariable] ? ` (${VARIABLE_UNITS[yVariable]})` : ''));
 
-    return (
+    return renderChart ? (
         <div className="relative" style={{ width: '100%', height }}>
             <ResponsiveContainer>
                 <ScatterChart
@@ -323,6 +317,10 @@ export const ScatterPlotChart: React.FC<ScatterPlotProps & { onCorrelation?: (va
                 </ScatterChart>
             </ResponsiveContainer>
         </div>
+    ) : (
+        <div className="flex items-center justify-center h-full min-h-[200px] text-red-600 dark:text-red-400 text-center">
+            No valid data to plot for the selected variables.
+        </div>
     );
 }
 
@@ -336,8 +334,7 @@ function reasonLabel(reason: string) {
 
 export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
     const { data, xVariable, yVariable, xUnit, yUnit, removeOutliers = true, iqrMultiplier = 2.5 } = props;
-    if (!removeOutliers) return null;
-    // All hooks must be below this line
+    // All hooks must be at the top
     const plotData = useMemo(() => {
         const xData = getDataByVariable(data, xVariable);
         const yData = getDataByVariable(data, yVariable);
@@ -364,6 +361,8 @@ export const ScatterPlotOutlierTable: React.FC<ScatterPlotProps> = (props) => {
     }, [plotData, allOutlierIndices, xOutliers, yOutliers]);
     const xLabel = xVariable + (xUnit !== undefined ? (xUnit ? ` (${xUnit})` : '') : (VARIABLE_UNITS[xVariable] ? ` (${VARIABLE_UNITS[xVariable]})` : ''));
     const yLabel = yVariable + (yUnit !== undefined ? (yUnit ? ` (${yUnit})` : '') : (VARIABLE_UNITS[yVariable] ? ` (${VARIABLE_UNITS[yVariable]})` : ''));
+    const renderTable = removeOutliers;
+    if (!renderTable) return null;
     if (outlierPoints.length === 0) {
         return (
             <div className="mt-6 rounded-md border border-green-400 bg-green-50 dark:bg-green-900/20 p-3 text-sm text-green-800 dark:text-green-200">
